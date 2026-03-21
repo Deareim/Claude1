@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Integration Catalog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    [x-cloak] { display: none !important; }
+    .sidebar-item { transition: background .15s, color .15s; }
+    .scrollable-table { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 230px); }
+    .scrollable-table table { border-collapse: collapse; min-width: 100%; }
+    .scrollable-table thead th {
+      position: sticky; top: 0; z-index: 10;
+      background: #f8fafc; white-space: nowrap;
+    }
+    td, th { padding: 8px 14px; border-bottom: 1px solid #e2e8f0; font-size: .82rem; }
+    th { font-weight: 600; color: #475569; text-align: left; cursor: pointer; user-select: none; }
+    th:hover { background: #f1f5f9; }
+    td { color: #1e293b; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    tr:hover td { background: #f8fafc; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:9999px; font-size:.72rem; font-weight:600; }
+    .modal-bg { backdrop-filter: blur(2px); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .slide-panel { transition: transform .25s ease; }
+    input[type=text], input[type=email], textarea, select {
+      border: 1px solid #cbd5e1; border-radius: 6px;
+      padding: 6px 10px; font-size: .82rem; width: 100%;
+      outline: none; background: #fff;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+    textarea { resize: vertical; min-height: 60px; }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-slate-800" x-data="catalogApp()" x-init="init()" x-cloak>
+
+<!-- ═══════════════════════════════════════════════════
+     LAYOUT WRAPPER
+══════════════════════════════════════════════════════ -->
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ─── SIDEBAR ──────────────────────────────────── -->
+  <aside class="w-60 flex-shrink-0 bg-slate-900 flex flex-col">
+    <!-- Logo -->
+    <div class="px-5 py-4 border-b border-slate-700">
+      <div class="text-white font-bold text-base tracking-tight">⚡ Integration Catalog</div>
+      <div class="text-slate-400 text-xs mt-0.5">H&amp;M Group · SAP CPI</div>
+    </div>
+
+    <!-- Global search -->
+    <div class="px-3 py-3 border-b border-slate-700">
+      <div class="relative">
+        <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+        <input type="text" x-model="globalQ"
+          @keyup.enter="doGlobalSearch()"
+          @input="if(globalQ==='') globalResults={}"
+          placeholder="Global search…"
+          class="w-full bg-slate-800 text-slate-100 placeholder-slate-500 border border-slate-700
+                 rounded pl-7 pr-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none" />
+      </div>
+    </div>
+
+    <!-- Table list -->
+    <nav class="flex-1 overflow-y-auto py-2">
+      <template x-for="t in tables" :key="t.name">
+        <button @click="selectTable(t.name)"
+          :class="currentTable && currentTable.name===t.name
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+          class="sidebar-item w-full flex items-center justify-between px-4 py-2.5 text-left text-xs font-medium rounded-none">
+          <span class="flex items-center gap-2 truncate">
+            <span x-text="tableIcon(t.name)" class="text-base leading-none"></span>
+            <span x-text="t.display_name" class="truncate"></span>
+          </span>
+          <span class="ml-1 text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
+            :class="currentTable && currentTable.name===t.name
+              ? 'bg-blue-500 text-white'
+              : 'bg-slate-700 text-slate-400'"
+            x-text="t.count"></span>
+        </button>
+      </template>
+    </nav>
+
+    <!-- Footer -->
+    <div class="px-4 py-3 border-t border-slate-700 text-xs text-slate-500">
+      <a href="/api/docs" target="_blank" class="hover:text-slate-300">API Docs ↗</a>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN CONTENT ─────────────────────────────── -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Global search results overlay -->
+    <div x-show="Object.keys(globalResults).length > 0"
+         class="absolute inset-0 z-40 bg-white overflow-auto p-6"
+         style="left:240px">
+      <div class="max-w-5xl mx-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">
+            Search results for "<span x-text="globalQ" class="text-blue-600"></span>"
+          </h2>
+          <button @click="globalResults={}; globalQ=''"
+            class="text-slate-500 hover:text-slate-800 text-sm">✕ Close</button>
+        </div>
+        <template x-for="[tbl, rows] in Object.entries(globalResults)" :key="tbl">
+          <div class="mb-6">
+            <div class="font-semibold text-slate-700 mb-2 text-sm"
+                 x-text="tableDisplayName(tbl) + ' (' + rows.length + ' matches)'"></div>
+            <div class="overflow-x-auto rounded border border-slate-200 shadow-sm">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="bg-slate-50">
+                    <template x-for="col in Object.keys(rows[0]).slice(0,8)" :key="col">
+                      <th class="px-3 py-2 text-left text-slate-500 font-semibold" x-text="col"></th>
+                    </template>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(row, ri) in rows" :key="ri">
+                    <tr class="border-t border-slate-100 hover:bg-slate-50 cursor-pointer"
+                        @click="globalResults={}; globalQ=''; selectTable(tbl)">
+                      <template x-for="col in Object.keys(row).slice(0,8)" :key="col">
+                        <td class="px-3 py-2 max-w-xs truncate" x-text="row[col] ?? ''"></td>
+                      </template>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Top header bar -->
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-4 flex-shrink-0 shadow-sm">
+      <div class="flex-1 min-w-0">
+        <h1 class="text-base font-bold text-slate-800 truncate"
+            x-text="currentTable ? currentTable.display_name : 'Select a table'"></h1>
+        <div class="text-xs text-slate-500 mt-0.5"
+             x-show="currentTable"
+             x-text="total + ' records' + (search ? ' (filtered)' : '')"></div>
+      </div>
+
+      <!-- Search bar -->
+      <div class="flex items-center gap-2 flex-shrink-0" x-show="currentTable">
+        <select x-model="searchCol" class="text-xs py-1.5 px-2 border border-slate-200 rounded w-36 bg-white">
+          <option value="">All columns</option>
+          <template x-for="col in schema" :key="col.name">
+            <option :value="col.name" x-text="col.label"></option>
+          </template>
+        </select>
+        <div class="relative">
+          <input type="text" x-model="search"
+            @input.debounce.300ms="page=1; loadRecords()"
+            @keyup.escape="search=''; page=1; loadRecords()"
+            placeholder="Filter records…"
+            class="text-xs py-1.5 pl-3 pr-8 border border-slate-200 rounded w-52 focus:border-blue-400 focus:outline-none" />
+          <button x-show="search" @click="search=''; page=1; loadRecords()"
+            class="absolute right-2 top-1.5 text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+      </div>
+
+      <!-- Column toggle -->
+      <div class="relative flex-shrink-0" x-show="currentTable">
+        <button @click="showColMenu=!showColMenu"
+          class="text-xs px-3 py-1.5 border border-slate-200 rounded hover:bg-slate-50 flex items-center gap-1">
+          <span>⊞</span> Columns
+        </button>
+        <div x-show="showColMenu" @click.away="showColMenu=false"
+          class="absolute right-0 top-8 z-30 bg-white border border-slate-200 rounded-lg shadow-lg p-3 w-64 max-h-72 overflow-y-auto">
+          <div class="text-xs font-semibold text-slate-600 mb-2">Toggle columns</div>
+          <template x-for="col in schema" :key="col.name">
+            <label class="flex items-center gap-2 py-1 cursor-pointer hover:bg-slate-50 rounded px-1">
+              <input type="checkbox"
+                :checked="!hiddenCols.has(col.name)"
+                @change="toggleCol(col.name)"
+                class="rounded" />
+              <span class="text-xs text-slate-700 truncate" x-text="col.label"></span>
+            </label>
+          </template>
+        </div>
+      </div>
+
+      <!-- Export CSV -->
+      <button x-show="currentTable" @click="exportCSV()"
+        class="flex-shrink-0 text-xs px-3 py-1.5 border border-slate-200 rounded hover:bg-slate-50 flex items-center gap-1">
+        ↓ Export
+      </button>
+
+      <!-- Add record -->
+      <button x-show="currentTable" @click="openAdd()"
+        class="flex-shrink-0 text-xs px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium flex items-center gap-1">
+        + Add Record
+      </button>
+    </header>
+
+    <!-- Empty state -->
+    <div x-show="!currentTable" class="flex-1 flex items-center justify-center text-slate-400 text-sm">
+      ← Select a table from the sidebar
+    </div>
+
+    <!-- Loading overlay -->
+    <div x-show="loading && currentTable" class="flex-1 flex items-center justify-center text-slate-400 text-sm">
+      <div class="flex items-center gap-2">
+        <svg class="animate-spin h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+        </svg>
+        Loading…
+      </div>
+    </div>
+
+    <!-- Data table -->
+    <div x-show="!loading && currentTable" class="flex-1 flex flex-col overflow-hidden">
+      <div class="scrollable-table flex-1 px-4 pt-3">
+        <table>
+          <thead>
+            <tr>
+              <th class="w-10 text-center text-slate-400">#</th>
+              <template x-for="col in visibleSchema" :key="col.name">
+                <th @click="sortBy===col.name ? (sortDesc=!sortDesc, loadRecords()) : (sortBy=col.name, sortDesc=false, loadRecords())"
+                    class="whitespace-nowrap">
+                  <span x-text="col.label"></span>
+                  <span x-show="sortBy===col.name" x-text="sortDesc ? ' ↓' : ' ↑'" class="text-blue-500"></span>
+                </th>
+              </template>
+              <th class="w-24 text-center text-slate-400">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-if="records.length === 0">
+              <tr><td :colspan="visibleSchema.length + 2" class="text-center text-slate-400 py-12">No records found</td></tr>
+            </template>
+            <template x-for="(rec, idx) in records" :key="rec.id">
+              <tr>
+                <td class="text-center text-slate-400 text-xs" x-text="(page-1)*pageSize + idx + 1"></td>
+                <template x-for="col in visibleSchema" :key="col.name">
+                  <td :title="rec[col.name] ?? ''" @dblclick="openEdit(rec)">
+                    <!-- Business Criticality badge -->
+                    <template x-if="col.name === 'business_criticality' && rec[col.name]">
+                      <span :class="critClass(rec[col.name])" class="badge" x-text="rec[col.name]"></span>
+                    </template>
+                    <!-- RIDEPOS ID link -->
+                    <template x-if="col.name.includes('ridepos') && rec[col.name] && rec[col.name]!=='None'">
+                      <button @click="openCrossRef(rec[col.name])"
+                        class="text-blue-600 hover:underline font-medium" x-text="rec[col.name]"></button>
+                    </template>
+                    <!-- Default cell -->
+                    <template x-if="col.name !== 'business_criticality' && !col.name.includes('ridepos')">
+                      <span x-text="cellVal(rec[col.name])"></span>
+                    </template>
+                  </td>
+                </template>
+                <td class="text-center">
+                  <button @click="openEdit(rec)" title="Edit"
+                    class="text-slate-400 hover:text-blue-600 mx-1 text-sm">✎</button>
+                  <button @click="confirmDelete(rec.id)" title="Delete"
+                    class="text-slate-400 hover:text-red-500 mx-1 text-sm">✕</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between px-6 py-3 bg-white border-t border-slate-200 flex-shrink-0 text-xs text-slate-600">
+        <div>
+          Showing <span class="font-medium" x-text="Math.min((page-1)*pageSize+1, total)"></span>–<span class="font-medium" x-text="Math.min(page*pageSize, total)"></span>
+          of <span class="font-medium" x-text="total"></span>
+          &nbsp;·&nbsp;
+          <select x-model.number="pageSize" @change="page=1; loadRecords()"
+            class="border border-slate-200 rounded px-1 py-0.5 text-xs">
+            <option>10</option><option>25</option><option>50</option><option>100</option>
+          </select> per page
+        </div>
+        <div class="flex items-center gap-1">
+          <button @click="page=1; loadRecords()" :disabled="page===1"
+            class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-30">«</button>
+          <button @click="page--; loadRecords()" :disabled="page===1"
+            class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-30">‹</button>
+          <template x-for="p in pageNumbers" :key="p">
+            <button @click="page=p; loadRecords()"
+              :class="p===page ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 hover:bg-slate-50'"
+              class="px-2.5 py-1 rounded border text-xs font-medium" x-text="p"></button>
+          </template>
+          <button @click="page++; loadRecords()" :disabled="page===pages"
+            class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-30">›</button>
+          <button @click="page=pages; loadRecords()" :disabled="page===pages"
+            class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-30">»</button>
+        </div>
+      </div>
+    </div><!-- end data table -->
+  </main><!-- end main -->
+</div><!-- end layout -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL: ADD / EDIT RECORD
+══════════════════════════════════════════════════════ -->
+<div x-show="showModal" x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center modal-bg bg-black/40"
+  @keydown.escape.window="showModal=false">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col mx-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+      <h2 class="font-bold text-slate-800 text-sm"
+          x-text="(modalMode==='add' ? '+ New Record — ' : '✎ Edit Record — ') + (currentTable ? currentTable.display_name : '')"></h2>
+      <button @click="showModal=false" class="text-slate-400 hover:text-slate-700 text-lg leading-none">✕</button>
+    </div>
+    <!-- Body -->
+    <div class="overflow-y-auto px-6 py-4 flex-1">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <template x-for="col in schema" :key="col.name">
+          <div :class="isLongField(col.name) ? 'sm:col-span-2' : ''">
+            <label class="block text-xs font-medium text-slate-600 mb-1" x-text="col.label"></label>
+            <!-- Dropdown for known constrained fields -->
+            <template x-if="dropdownOptions(col.name).length > 0">
+              <select x-model="formData[col.name]">
+                <option value="">— select —</option>
+                <template x-for="opt in dropdownOptions(col.name)" :key="opt">
+                  <option :value="opt" x-text="opt"></option>
+                </template>
+              </select>
+            </template>
+            <!-- Textarea for long fields -->
+            <template x-if="dropdownOptions(col.name).length === 0 && isLongField(col.name)">
+              <textarea x-model="formData[col.name]" rows="2"></textarea>
+            </template>
+            <!-- Default text input -->
+            <template x-if="dropdownOptions(col.name).length === 0 && !isLongField(col.name)">
+              <input type="text" x-model="formData[col.name]" />
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 px-6 py-4 border-t border-slate-200">
+      <button @click="showModal=false"
+        class="px-4 py-2 text-xs rounded border border-slate-200 hover:bg-slate-50 font-medium">Cancel</button>
+      <button @click="saveRecord()" :disabled="savingRecord"
+        class="px-5 py-2 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 font-medium disabled:opacity-50">
+        <span x-show="!savingRecord" x-text="modalMode==='add' ? 'Add Record' : 'Save Changes'"></span>
+        <span x-show="savingRecord">Saving…</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL: DELETE CONFIRMATION
+══════════════════════════════════════════════════════ -->
+<div x-show="showDeleteModal" x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center modal-bg bg-black/40"
+  @keydown.escape.window="showDeleteModal=false">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
+    <div class="text-center">
+      <div class="text-4xl mb-3">🗑️</div>
+      <h3 class="font-bold text-slate-800 mb-2">Delete record?</h3>
+      <p class="text-sm text-slate-500 mb-6">This action cannot be undone.</p>
+      <div class="flex gap-3">
+        <button @click="showDeleteModal=false"
+          class="flex-1 py-2 text-sm rounded border border-slate-200 hover:bg-slate-50 font-medium">Cancel</button>
+        <button @click="deleteRecord()"
+          class="flex-1 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700 font-medium">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     PANEL: CROSS-REFERENCE (slide-over)
+══════════════════════════════════════════════════════ -->
+<div x-show="showCrossRef" x-cloak
+  class="fixed inset-0 z-50 flex"
+  @keydown.escape.window="showCrossRef=false">
+  <!-- Backdrop -->
+  <div class="flex-1 bg-black/30" @click="showCrossRef=false"></div>
+  <!-- Panel -->
+  <div class="slide-panel w-full max-w-2xl bg-white shadow-2xl flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 flex-shrink-0">
+      <div>
+        <h2 class="font-bold text-slate-800 text-sm">Cross-reference</h2>
+        <div class="text-xs text-slate-500 mt-0.5">RIDEPOS ID: <span class="font-mono text-blue-600" x-text="crossRefId"></span></div>
+      </div>
+      <button @click="showCrossRef=false" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-4">
+      <div x-show="crossRefLoading" class="text-center text-slate-400 py-10 text-sm">Loading…</div>
+      <div x-show="!crossRefLoading && Object.keys(crossRefData).length === 0"
+           class="text-center text-slate-400 py-10 text-sm">No related records found in other tables.</div>
+      <template x-for="[tbl, rows] in Object.entries(crossRefData)" :key="tbl">
+        <div class="mb-6">
+          <div class="flex items-center gap-2 mb-2">
+            <span x-text="tableIcon(tbl)" class="text-base"></span>
+            <span class="font-semibold text-slate-700 text-sm" x-text="tableDisplayName(tbl)"></span>
+            <span class="text-xs text-slate-400" x-text="'(' + rows.length + ' record' + (rows.length>1?'s':'') + ')'"></span>
+          </div>
+          <template x-for="(row, ri) in rows" :key="ri">
+            <div class="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                <template x-for="[k,v] in Object.entries(row).filter(([k])=>k!=='id' && v && v!=='None')" :key="k">
+                  <div>
+                    <div class="text-xs text-slate-400 truncate" x-text="k.replace(/_/g,' ')"></div>
+                    <div class="text-xs text-slate-700 font-medium truncate" :title="v" x-text="v"></div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     TOAST NOTIFICATION
+══════════════════════════════════════════════════════ -->
+<div x-show="notification" x-cloak
+  class="fixed bottom-5 right-5 z-50 px-5 py-3 rounded-lg shadow-lg text-sm font-medium text-white transition-all"
+  :class="notification && notification.type==='error' ? 'bg-red-600' : 'bg-green-600'"
+  x-text="notification ? notification.msg : ''">
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     ALPINE.JS APP
+══════════════════════════════════════════════════════ -->
+<script>
+function catalogApp() {
+  return {
+    /* ── state ─────────────────────────────────────── */
+    tables:       [],
+    currentTable: null,
+    schema:       [],
+    records:      [],
+    total:        0,
+    pages:        1,
+
+    page:         1,
+    pageSize:     25,
+    search:       '',
+    searchCol:    '',
+    sortBy:       '',
+    sortDesc:     false,
+
+    loading:      false,
+
+    showModal:    false,
+    modalMode:    'add',
+    formData:     {},
+    savingRecord: false,
+
+    showDeleteModal: false,
+    deletingId:      null,
+
+    showCrossRef:   false,
+    crossRefId:     null,
+    crossRefData:   {},
+    crossRefLoading: false,
+
+    hiddenCols:  new Set(['source_file', 'source_worksheet', 'sourcefile', 'sourceworksheet']),
+    showColMenu: false,
+
+    globalQ:       '',
+    globalResults: {},
+
+    notification: null,
+
+    /* ── init ──────────────────────────────────────── */
+    async init() {
+      await this.loadTables();
+      if (this.tables.length > 0) await this.selectTable(this.tables[0].name);
+    },
+
+    /* ── tables ────────────────────────────────────── */
+    async loadTables() {
+      const res    = await fetch('/api/tables');
+      this.tables  = await res.json();
+    },
+
+    async selectTable(name) {
+      this.currentTable = this.tables.find(t => t.name === name) || null;
+      this.page         = 1;
+      this.search       = '';
+      this.searchCol    = '';
+      this.sortBy       = '';
+      this.sortDesc     = false;
+      this.globalResults = {};
+      await this.loadSchema();
+      await this.loadRecords();
+    },
+
+    /* ── schema ────────────────────────────────────── */
+    async loadSchema() {
+      if (!this.currentTable) return;
+      const res   = await fetch(`/api/${this.currentTable.name}/schema`);
+      this.schema = await res.json();
+    },
+
+    /* ── records ───────────────────────────────────── */
+    async loadRecords() {
+      if (!this.currentTable) return;
+      this.loading = true;
+      const p = new URLSearchParams({
+        page:       this.page,
+        page_size:  this.pageSize,
+        search:     this.search,
+        search_col: this.searchCol,
+        sort_by:    this.sortBy,
+        sort_desc:  this.sortDesc,
+      });
+      const res        = await fetch(`/api/${this.currentTable.name}/records?${p}`);
+      const data       = await res.json();
+      this.records     = data.data;
+      this.total       = data.total;
+      this.pages       = data.pages;
+      this.loading     = false;
+    },
+
+    /* ── CRUD modals ───────────────────────────────── */
+    openAdd() {
+      this.formData  = {};
+      this.schema.forEach(c => { this.formData[c.name] = ''; });
+      this.modalMode = 'add';
+      this.showModal = true;
+    },
+
+    openEdit(record) {
+      this.formData  = { ...record };
+      this.modalMode = 'edit';
+      this.showModal = true;
+    },
+
+    async saveRecord() {
+      this.savingRecord = true;
+      try {
+        const isAdd = this.modalMode === 'add';
+        const url   = isAdd
+          ? `/api/${this.currentTable.name}/records`
+          : `/api/${this.currentTable.name}/records/${this.formData.id}`;
+        const res   = await fetch(url, {
+          method:  isAdd ? 'POST' : 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(this.formData),
+        });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Unknown error');
+        this.showModal = false;
+        await this.loadRecords();
+        await this.loadTables();
+        this.notify(isAdd ? 'Record added successfully' : 'Record updated', 'success');
+      } catch (e) {
+        this.notify('Error: ' + e.message, 'error');
+      } finally {
+        this.savingRecord = false;
+      }
+    },
+
+    confirmDelete(id) {
+      this.deletingId      = id;
+      this.showDeleteModal = true;
+    },
+
+    async deleteRecord() {
+      try {
+        const res = await fetch(
+          `/api/${this.currentTable.name}/records/${this.deletingId}`,
+          { method: 'DELETE' }
+        );
+        if (!res.ok) throw new Error((await res.json()).detail || 'Unknown error');
+        this.showDeleteModal = false;
+        this.deletingId      = null;
+        await this.loadRecords();
+        await this.loadTables();
+        this.notify('Record deleted', 'success');
+      } catch (e) {
+        this.notify('Error: ' + e.message, 'error');
+      }
+    },
+
+    /* ── cross-reference ───────────────────────────── */
+    async openCrossRef(rideposId) {
+      if (!rideposId || rideposId === 'None') return;
+      this.crossRefId      = rideposId;
+      this.crossRefData    = {};
+      this.crossRefLoading = true;
+      this.showCrossRef    = true;
+      const res            = await fetch(`/api/cross-ref/${encodeURIComponent(rideposId)}`);
+      this.crossRefData    = await res.json();
+      this.crossRefLoading = false;
+    },
+
+    /* ── global search ─────────────────────────────── */
+    async doGlobalSearch() {
+      if (!this.globalQ.trim()) return;
+      const res          = await fetch(`/api/global-search?q=${encodeURIComponent(this.globalQ)}`);
+      this.globalResults = await res.json();
+    },
+
+    /* ── column visibility ─────────────────────────── */
+    toggleCol(name) {
+      const s = new Set(this.hiddenCols);
+      s.has(name) ? s.delete(name) : s.add(name);
+      this.hiddenCols = s;
+    },
+
+    /* ── export ────────────────────────────────────── */
+    exportCSV() {
+      if (!this.visibleSchema.length) return;
+      const headers = this.visibleSchema.map(c => `"${c.label}"`).join(',');
+      const rows    = this.records.map(r =>
+        this.visibleSchema.map(c => {
+          const v = String(r[c.name] ?? '').replace(/"/g, '""');
+          return `"${v}"`;
+        }).join(',')
+      );
+      const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv' });
+      const a    = Object.assign(document.createElement('a'), {
+        href:     URL.createObjectURL(blob),
+        download: `${this.currentTable.name}_${new Date().toISOString().slice(0,10)}.csv`,
+      });
+      a.click(); URL.revokeObjectURL(a.href);
+    },
+
+    /* ── helpers ───────────────────────────────────── */
+    cellVal(v) {
+      if (v === null || v === undefined || v === 'None') return '';
+      return String(v);
+    },
+
+    critClass(v) {
+      if (!v) return 'bg-gray-100 text-gray-600';
+      const m = { high: 'bg-red-100 text-red-700', medium: 'bg-yellow-100 text-yellow-700', low: 'bg-green-100 text-green-700' };
+      return m[v.toLowerCase()] || 'bg-gray-100 text-gray-600';
+    },
+
+    isLongField(name) {
+      return ['process_flow','artifact_desc','comments','func_spec','tech_spec',
+              'tables_replicated','soap_proxy_endpoint','base_path','resource',
+              'directory','directory_read','directory_write','topic'].includes(name);
+    },
+
+    dropdownOptions(name) {
+      const map = {
+        business_criticality: ['High', 'Medium', 'Low'],
+        direction:            ['Inbound', 'Outbound', 'Both'],
+        service_type:         ['Consumer Proxy', 'Service Definition', 'Non-SAP'],
+        encrypted:            ['Yes', 'No'],
+        digital_signature:    ['Yes', 'No'],
+        mep:                  ['Synchronous', 'Asynchronous'],
+        trigger_type:         ['Real-time', 'Scheduled', 'Event-driven'],
+        role:                 ['Publisher', 'Subscriber', 'Publisher/Subscriber'],
+        role_cpi:             ['Publisher', 'Subscriber', 'Publisher/Subscriber'],
+        adapter_type:         ['AMQP', 'HTTP', 'HTTPS', 'IDOC', 'SOAP', 'RFC', 'SFTP', 'Mail', 'ODATA'],
+        sap_env:              ['SAP ECC', 'SAP EWM', 'SAP CRM', 'SAP CAR', 'SAP GTS', 'SAP S/4HANA'],
+      };
+      return map[name] || [];
+    },
+
+    tableIcon(name) {
+      const m = {
+        cpi: '⚡', http_services: '🌐', file_services: '📁',
+        event_services: '📨', soap_services: '🧼', rfc_services: '🔧',
+        idoc_services: '📄', wss_services: '🔌', mail_services: '✉️',
+      };
+      return m[name] || '📋';
+    },
+
+    tableDisplayName(name) {
+      const t = this.tables.find(x => x.name === name);
+      return t ? t.display_name : name;
+    },
+
+    notify(msg, type) {
+      this.notification = { msg, type };
+      setTimeout(() => { this.notification = null; }, 3000);
+    },
+
+    /* ── computed ──────────────────────────────────── */
+    get visibleSchema() {
+      return this.schema.filter(c => !this.hiddenCols.has(c.name));
+    },
+
+    get pageNumbers() {
+      const total = this.pages, cur = this.page;
+      const range = 5;
+      let start = Math.max(1, cur - Math.floor(range / 2));
+      let end   = Math.min(total, start + range - 1);
+      if (end - start < range - 1) start = Math.max(1, end - range + 1);
+      const arr = [];
+      for (let i = start; i <= end; i++) arr.push(i);
+      return arr;
+    },
+  };
+}
+</script>
+</body>
+</html>
