@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f172a">
+<title>Control Panel</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --border: #283548;
+    --accent: #3b82f6; --accent2: #2563eb;
+    --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+    --text: #f1f5f9; --muted: #8b9cb8; --dim: #4b5e7a;
+    --radius: 16px; --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: calc(20px + var(--safe-b));
+  }
+
+  /* Header */
+  .header {
+    padding: 14px 20px; display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(15,23,42,0.85); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none; color: var(--muted); font-size: 18px;
+    transition: border-color 0.2s;
+  }
+  .back-btn:active { border-color: var(--accent); }
+  .header-info { flex: 1; }
+  .header-info h1 { font-size: 17px; font-weight: 700; }
+  .header-info .alias { font-size: 12px; color: var(--accent); }
+
+  /* Categories */
+  .section { padding: 16px 20px 0; }
+  .section-title {
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 10px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmd-list { display: flex; flex-direction: column; gap: 8px; }
+  .cmd-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 14px;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .cmd-row:active { border-color: var(--accent); }
+  .cmd-row.active { border-color: var(--accent); background: rgba(59,130,246,0.05); }
+  .cmd-emoji {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .cmd-emoji.read { background: rgba(59,130,246,0.1); }
+  .cmd-emoji.write { background: rgba(234,179,8,0.1); }
+  .cmd-emoji.danger { background: rgba(239,68,68,0.1); }
+  .cmd-text { flex: 1; min-width: 0; }
+  .cmd-text .cmd-name { font-size: 15px; font-weight: 600; }
+  .cmd-text .cmd-desc { font-size: 12px; color: var(--muted); }
+  .cmd-chevron { color: var(--dim); font-size: 18px; }
+
+  /* Execution sheet */
+  .sheet-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  }
+  .sheet-overlay.show { display: flex; align-items: flex-end; justify-content: center; }
+  .sheet {
+    width: 100%; max-width: 500px; max-height: 85vh;
+    background: var(--card); border-radius: 20px 20px 0 0;
+    padding: 20px 24px calc(24px + var(--safe-b));
+    overflow-y: auto; animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+  .sheet-handle {
+    width: 40px; height: 4px; border-radius: 2px;
+    background: var(--dim); margin: 0 auto 16px;
+  }
+  .sheet-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--muted); margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .field input, .field select {
+    width: 100%; padding: 13px 14px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-size: 16px;
+    outline: none; -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field select { cursor: pointer; }
+  .field select option { background: var(--bg); }
+
+  .btn {
+    width: 100%; padding: 15px; border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    -webkit-appearance: none; transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #6366f1);
+    color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; }
+
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result */
+  .result-area { margin-top: 16px; display: none; }
+  .result-area.show { display: block; }
+  .result-label {
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .result-box {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; font-size: 13px;
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    line-height: 1.5; max-height: 300px; overflow: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .result-box.success { border-color: rgba(34,197,94,0.3); }
+  .result-box.error { border-color: rgba(239,68,68,0.3); color: var(--red); }
+  .result-status {
+    margin-top: 8px; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a class="back-btn" href="/verisure">&#8249;</a>
+  <div class="header-info">
+    <h1>Control Panel</h1>
+    <div class="alias" id="alias-label"></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">&#128269; Read Status</div>
+  <div class="cmd-list" id="read-list"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">&#128680; Alarm Control</div>
+  <div class="cmd-list" id="alarm-list"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">&#128274; Door Locks</div>
+  <div class="cmd-list" id="lock-list"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">&#128268; Smart Plugs</div>
+  <div class="cmd-list" id="plug-list"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">&#8943; Other</div>
+  <div class="cmd-list" id="other-list"></div>
+</div>
+
+<!-- Bottom sheet -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheet-title">Command</div>
+    <div id="sheet-fields"></div>
+    <button class="btn btn-primary" id="sheet-btn" onclick="runCommand()">Execute</button>
+    <div class="result-area" id="result-area">
+      <div class="result-label">Response</div>
+      <div class="result-box" id="result-box"></div>
+      <div class="result-status" id="result-status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const username = params.get('username') || '';
+const giid = params.get('giid') || '';
+const alias = params.get('alias') || 'Installation';
+document.getElementById('alias-label').textContent = alias;
+
+let activeCmd = null;
+let deviceList = [];
+
+const COMMANDS = [
+  { cmd: 'arm_state',              label: 'Arm State',            desc: 'Current alarm status',            cat: 'read',  emoji: '&#128737;&#65039;', style: 'read',   fields: [] },
+  { cmd: 'door_window',            label: 'Doors & Windows',      desc: 'Sensor status',                   cat: 'read',  emoji: '&#128682;',         style: 'read',   fields: [] },
+  { cmd: 'climate',                label: 'Climate',              desc: 'Temperature & humidity',           cat: 'read',  emoji: '&#127777;&#65039;', style: 'read',   fields: [] },
+  { cmd: 'smart_lock',             label: 'Smart Lock',           desc: 'Lock state',                      cat: 'read',  emoji: '&#128274;',         style: 'read',   fields: [] },
+  { cmd: 'smartplugs',             label: 'Smart Plugs',          desc: 'All plug status',                 cat: 'read',  emoji: '&#128268;',         style: 'read',   fields: [] },
+  { cmd: 'cameras',                label: 'Cameras',              desc: 'Camera state',                    cat: 'read',  emoji: '&#128247;',         style: 'read',   fields: [] },
+  { cmd: 'cameras_last_image',     label: 'Last Image',           desc: 'Most recent captures',            cat: 'read',  emoji: '&#128248;',         style: 'read',   fields: [] },
+  { cmd: 'broadband',              label: 'Broadband',            desc: 'Connection status',               cat: 'read',  emoji: '&#128246;',         style: 'read',   fields: [] },
+  { cmd: 'event_log',              label: 'Event Log',            desc: 'Recent events',                   cat: 'read',  emoji: '&#128203;',         style: 'read',   fields: [] },
+  { cmd: 'firmware',               label: 'Firmware',             desc: 'Version info',                    cat: 'read',  emoji: '&#128421;&#65039;', style: 'read',   fields: [] },
+  { cmd: 'user_trackings',         label: 'User Tracking',        desc: 'User locations',                  cat: 'read',  emoji: '&#128205;',         style: 'read',   fields: [] },
+  { cmd: 'smart_button',           label: 'Smart Button',         desc: 'Button state',                    cat: 'read',  emoji: '&#128992;',         style: 'read',   fields: [] },
+  { cmd: 'capability',             label: 'Capabilities',         desc: 'System capabilities',             cat: 'read',  emoji: '&#9881;&#65039;',   style: 'read',   fields: [] },
+  { cmd: 'permissions',            label: 'Permissions',          desc: 'User permissions',                cat: 'read',  emoji: '&#128100;',         style: 'read',   fields: [] },
+  { cmd: 'remaining_sms',          label: 'Remaining SMS',        desc: 'SMS credits',                     cat: 'read',  emoji: '&#128172;',         style: 'read',   fields: [] },
+
+  { cmd: 'arm_away',  label: 'Arm Away',  desc: 'Full arm (away mode)', cat: 'alarm', emoji: '&#128308;', style: 'danger', fields: ['code'] },
+  { cmd: 'arm_home',  label: 'Arm Home',  desc: 'Partial arm',          cat: 'alarm', emoji: '&#128992;', style: 'write',  fields: ['code'] },
+  { cmd: 'disarm',    label: 'Disarm',    desc: 'Disarm the system',    cat: 'alarm', emoji: '&#128994;', style: 'write',  fields: ['code'] },
+
+  { cmd: 'door_lock',               label: 'Lock Door',           desc: 'Lock a door',                   cat: 'lock', emoji: '&#128274;', style: 'write',  fields: ['device_label', 'code'] },
+  { cmd: 'door_unlock',             label: 'Unlock Door',         desc: 'Unlock a door',                 cat: 'lock', emoji: '&#128275;', style: 'danger', fields: ['device_label', 'code'] },
+  { cmd: 'door_lock_configuration', label: 'Lock Config',         desc: 'Lock settings',                 cat: 'lock', emoji: '&#9881;&#65039;', style: 'read', fields: ['device_label'] },
+  { cmd: 'set_autolock_enabled',    label: 'Autolock',            desc: 'Toggle autolock',               cat: 'lock', emoji: '&#128259;', style: 'write',  fields: ['device_label', 'value'] },
+
+  { cmd: 'set_smartplug', label: 'Toggle Plug', desc: 'Turn on or off', cat: 'plug', emoji: '&#128268;', style: 'write', fields: ['device_label', 'value'] },
+
+  { cmd: 'charge_sms', label: 'Charge SMS', desc: 'Top up credits', cat: 'other', emoji: '&#128172;', style: 'write', fields: [] },
+];
+
+const LIST_MAP = { read: 'read-list', alarm: 'alarm-list', lock: 'lock-list', plug: 'plug-list', other: 'other-list' };
+
+async function loadDevices() {
+  try {
+    const res = await fetch('/auth/devices?username=' + encodeURIComponent(username) + '&giid=' + encodeURIComponent(giid));
+    if (res.ok) { const d = await res.json(); deviceList = d.devices || []; }
+  } catch {}
+}
+
+function buildList() {
+  COMMANDS.forEach(c => {
+    const list = document.getElementById(LIST_MAP[c.cat]);
+    if (!list) return;
+    const row = document.createElement('div');
+    row.className = 'cmd-row';
+    row.dataset.cmd = c.cmd;
+    row.innerHTML = `
+      <div class="cmd-emoji ${c.style}">${c.emoji}</div>
+      <div class="cmd-text">
+        <div class="cmd-name">${c.label}</div>
+        <div class="cmd-desc">${c.desc}</div>
+      </div>
+      <div class="cmd-chevron">&#8250;</div>
+    `;
+    row.onclick = () => openSheet(c);
+    list.appendChild(row);
+  });
+}
+
+function openSheet(c) {
+  activeCmd = c;
+  document.getElementById('sheet-title').textContent = c.label;
+  document.getElementById('result-area').classList.remove('show');
+
+  const fields = document.getElementById('sheet-fields');
+  if (c.fields.length === 0) {
+    fields.innerHTML = '<p style="font-size:14px;color:var(--muted);margin-bottom:16px;">No parameters needed.</p>';
+  } else {
+    let html = '';
+    c.fields.forEach(f => {
+      if (f === 'device_label') {
+        let opts = '<option value="">Select device...</option>';
+        deviceList.forEach(d => {
+          opts += `<option value="${d.deviceLabel}">${d.area} (${d.deviceLabel})</option>`;
+        });
+        html += `<div class="field"><label>Device</label><select id="field-${f}">${opts}</select></div>`;
+      } else if (f === 'code') {
+        html += `<div class="field"><label>Security Code (PIN)</label><input type="password" id="field-${f}" placeholder="Your alarm PIN" inputmode="numeric"></div>`;
+      } else if (f === 'value') {
+        html += `<div class="field"><label>Value</label><select id="field-${f}"><option value="true">On / Enable</option><option value="false">Off / Disable</option></select></div>`;
+      }
+    });
+    fields.innerHTML = html;
+  }
+
+  document.getElementById('sheet-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSheet(e) {
+  if (e && e.target !== document.getElementById('sheet-overlay')) return;
+  document.getElementById('sheet-overlay').classList.remove('show');
+  document.body.style.overflow = '';
+  activeCmd = null;
+}
+
+async function runCommand() {
+  if (!activeCmd) return;
+  const btn = document.getElementById('sheet-btn');
+  const resultArea = document.getElementById('result-area');
+  const resultBox = document.getElementById('result-box');
+  const resultStatus = document.getElementById('result-status');
+
+  const body = { username, giid, command: activeCmd.cmd, device_label: '', code: '', value: '' };
+  activeCmd.fields.forEach(f => {
+    const el = document.getElementById('field-' + f);
+    if (el) body[f] = el.value.trim();
+  });
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Running...';
+  resultArea.classList.remove('show');
+
+  try {
+    const res = await fetch('/auth/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    resultArea.classList.add('show');
+    resultBox.classList.remove('error', 'success');
+
+    if (res.ok && data.success) {
+      resultBox.classList.add('success');
+      resultBox.textContent = JSON.stringify(data.result, null, 2);
+      resultStatus.innerHTML = '<span style="color:var(--green);">&#10003; Success</span>';
+    } else {
+      resultBox.classList.add('error');
+      resultBox.textContent = data.detail || JSON.stringify(data, null, 2);
+      resultStatus.innerHTML = '<span style="color:var(--red);">&#10007; Failed</span>';
+    }
+  } catch (err) {
+    resultArea.classList.add('show');
+    resultBox.classList.add('error');
+    resultBox.textContent = err.message;
+    resultStatus.innerHTML = '<span style="color:var(--red);">&#10007; Error</span>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Execute';
+  }
+}
+
+loadDevices().then(() => buildList());
+</script>
+
+</body>
+</html>

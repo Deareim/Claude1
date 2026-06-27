@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f172a">
+<title>Verisure Home</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --card2: #162032;
+    --border: #283548; --accent: #3b82f6; --accent2: #2563eb;
+    --green: #22c55e; --red: #ef4444; --yellow: #eab308; --orange: #f97316;
+    --text: #f1f5f9; --muted: #8b9cb8; --dim: #4b5e7a;
+    --radius: 16px; --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Login ── */
+  .login-screen {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 24px;
+  }
+  .login-screen.hidden { display: none; }
+  .login-logo {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--accent), #6366f1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(59,130,246,0.25);
+  }
+  .login-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .login-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .login-card {
+    width: 100%; max-width: 380px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+  }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--muted); margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .field input {
+    width: 100%; padding: 14px 16px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); font-size: 16px;
+    outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .btn {
+    width: 100%; padding: 15px; border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; -webkit-appearance: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #6366f1);
+    color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; }
+  .toast {
+    padding: 12px 16px; border-radius: 12px; font-size: 13px;
+    margin-bottom: 16px; display: none; line-height: 1.4;
+  }
+  .toast.error { display: block; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+  .toast.info { display: block; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); color: var(--accent); }
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Dashboard ── */
+  .dashboard { display: none; padding-bottom: calc(20px + var(--safe-b)); }
+  .dashboard.active { display: block; }
+  .dash-header {
+    padding: 16px 20px 12px; display: flex; align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(15,23,42,0.85); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .dash-header h1 { font-size: 20px; font-weight: 700; }
+  .dash-header .user-chip {
+    font-size: 12px; color: var(--muted); background: var(--card);
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .section { padding: 0 20px; margin-bottom: 24px; }
+  .section-title {
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  /* Alarm card */
+  .alarm-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .alarm-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .alarm-icon.disarmed { background: rgba(34,197,94,0.12); }
+  .alarm-icon.armed { background: rgba(239,68,68,0.12); }
+  .alarm-icon.home { background: rgba(234,179,8,0.12); }
+  .alarm-icon.unknown { background: rgba(139,156,184,0.1); }
+  .alarm-info { flex: 1; min-width: 0; }
+  .alarm-info .alarm-status { font-size: 18px; font-weight: 700; }
+  .alarm-info .alarm-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .alarm-badge {
+    font-size: 11px; font-weight: 700; padding: 4px 12px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .alarm-badge.disarmed { background: rgba(34,197,94,0.12); color: var(--green); }
+  .alarm-badge.armed { background: rgba(239,68,68,0.12); color: var(--red); }
+  .alarm-badge.home { background: rgba(234,179,8,0.12); color: var(--yellow); }
+  .alarm-badge.unknown { background: rgba(139,156,184,0.1); color: var(--muted); }
+
+  /* Sensor grid */
+  .sensor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media (min-width: 500px) { .sensor-grid { grid-template-columns: repeat(3, 1fr); } }
+  .sensor-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    transition: border-color 0.2s;
+  }
+  .sensor-card.open { border-color: rgba(239,68,68,0.3); }
+  .sensor-card.closed { border-color: rgba(34,197,94,0.15); }
+  .sensor-top {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sensor-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .sensor-icon.door.closed { background: rgba(34,197,94,0.1); }
+  .sensor-icon.door.open { background: rgba(239,68,68,0.1); }
+  .sensor-icon.window.closed { background: rgba(34,197,94,0.1); }
+  .sensor-icon.window.open { background: rgba(239,68,68,0.1); }
+  .sensor-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .sensor-dot.closed { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+  .sensor-dot.open { background: var(--red); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+  .sensor-name {
+    font-size: 13px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sensor-time {
+    font-size: 11px; color: var(--dim);
+  }
+
+  /* Control link */
+  .control-bar {
+    margin: 0 20px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    text-decoration: none; color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .control-bar:active { border-color: var(--accent); }
+  .control-bar .cb-left {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .control-bar .cb-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(59,130,246,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .control-bar .cb-label { font-size: 15px; font-weight: 600; }
+  .control-bar .cb-sub { font-size: 12px; color: var(--muted); }
+  .control-bar .cb-arrow { color: var(--dim); font-size: 20px; }
+
+  /* Loading skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 14px; height: 80px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* Installation selector (if multiple) */
+  .install-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px;
+    font-size: 14px; font-weight: 500; margin-right: 8px; margin-bottom: 8px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .install-chip.active { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+  .install-chip:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-logo">&#127968;</div>
+  <div class="login-title">Verisure Home</div>
+  <div class="login-sub">Sign in to manage your security system</div>
+  <div class="login-card">
+    <div class="toast" id="login-toast"></div>
+
+    <!-- Step 1: credentials -->
+    <div id="step-creds">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <!-- Step 2: MFA -->
+    <div id="step-mfa" style="display:none;">
+      <div class="toast info" style="display:block;">A verification code has been sent to your phone or email.</div>
+      <div class="field">
+        <label>Verification Code</label>
+        <input type="text" id="mfa-code" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
+      </div>
+      <button class="btn btn-primary" id="btn-mfa" onclick="doMfa()">Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <h1>&#127968; Home</h1>
+    <div class="user-chip" id="user-chip" onclick="doLogout()">Sign out</div>
+  </div>
+
+  <!-- Installation chips (if multiple) -->
+  <div class="section" id="install-chips-section" style="display:none;">
+    <div id="install-chips"></div>
+  </div>
+
+  <!-- Alarm -->
+  <div class="section">
+    <div class="section-title">Alarm</div>
+    <div id="alarm-area"><div class="skeleton"></div></div>
+  </div>
+
+  <!-- Sensors -->
+  <div class="section">
+    <div class="section-title">Doors & Windows</div>
+    <div class="sensor-grid" id="sensor-grid">
+      <div class="skeleton"></div><div class="skeleton"></div>
+      <div class="skeleton"></div><div class="skeleton"></div>
+    </div>
+  </div>
+
+  <!-- Control panel link -->
+  <div class="section">
+    <a class="control-bar" id="control-link" href="#">
+      <div class="cb-left">
+        <div class="cb-icon">&#9881;&#65039;</div>
+        <div>
+          <div class="cb-label">Control Panel</div>
+          <div class="cb-sub">All commands & device management</div>
+        </div>
+      </div>
+      <div class="cb-arrow">&#8250;</div>
+    </a>
+  </div>
+</div>
+
+<script>
+let currentUser = '';
+let currentPass = '';
+let installations = [];
+let activeGiid = '';
+let activeAlias = '';
+
+function showToast(msg, type) {
+  const t = document.getElementById('login-toast');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+}
+function clearToast() {
+  const t = document.getElementById('login-toast');
+  t.className = 'toast';
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('dashboard').classList.add('active');
+}
+
+function sensorType(name) {
+  const n = name.toLowerCase();
+  if (n.includes('dörr') || n.includes('door') || n.includes('entré') || n.includes('entre'))
+    return 'door';
+  return 'window';
+}
+
+function sensorIcon(type, state) {
+  if (type === 'door') return state === 'closed' ? '&#128682;' : '&#128683;';
+  return state === 'closed' ? '&#129695;' : '&#129695;';
+}
+
+function doorIcon(state) { return state === 'closed' ? '&#128274;' : '&#128275;'; }
+function windowIcon(state) { return state === 'closed' ? '&#11036;' : '&#11036;'; }
+
+function stateClass(s) {
+  if (!s) return 'unknown';
+  return (s.toUpperCase() === 'CLOSE' || s.toUpperCase() === 'CLOSED') ? 'closed' : 'open';
+}
+
+function armClass(type) {
+  if (!type) return 'unknown';
+  const t = type.toUpperCase();
+  if (t.includes('AWAY')) return 'armed';
+  if (t.includes('HOME') || t.includes('PARTIAL')) return 'home';
+  if (t.includes('DISARM')) return 'disarmed';
+  return 'unknown';
+}
+
+function armEmoji(cls) {
+  if (cls === 'armed') return '&#128308;';
+  if (cls === 'disarmed') return '&#128994;';
+  if (cls === 'home') return '&#128992;';
+  return '&#9898;';
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  try {
+    const dt = new Date(d);
+    const now = new Date();
+    const diff = (now - dt) / 60000;
+    if (diff < 1) return 'Just now';
+    if (diff < 60) return Math.floor(diff) + ' min ago';
+    if (diff < 1440 && dt.getDate() === now.getDate()) {
+      return dt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    }
+    return dt.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' ' +
+           dt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  } catch { return d; }
+}
+
+// -- Auth flow --
+
+async function tryResume() {
+  const saved = localStorage.getItem('verisure_user');
+  if (!saved) return false;
+  try {
+    const {username, password} = JSON.parse(saved);
+    const res = await fetch('/auth/resume', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    if (res.ok) {
+      currentUser = username;
+      currentPass = password;
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+async function doLogin() {
+  clearToast();
+  const email = document.getElementById('email').value.trim();
+  const pwd = document.getElementById('password').value;
+  if (!email || !pwd) { showToast('Enter email and password', 'error'); return; }
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in...';
+
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: email, password: pwd})
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      currentUser = email;
+      currentPass = pwd;
+      if (data.mfa_required) {
+        document.getElementById('step-creds').style.display = 'none';
+        document.getElementById('step-mfa').style.display = 'block';
+        document.getElementById('mfa-code').focus();
+      } else {
+        localStorage.setItem('verisure_user', JSON.stringify({username: email, password: pwd}));
+        await enterDashboard();
+      }
+    } else {
+      showToast(data.detail || 'Login failed', 'error');
+    }
+  } catch (err) {
+    showToast('Connection error', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+async function doMfa() {
+  clearToast();
+  const code = document.getElementById('mfa-code').value.trim();
+  if (!code) { showToast('Enter the verification code', 'error'); return; }
+
+  const btn = document.getElementById('btn-mfa');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Verifying...';
+
+  try {
+    const res = await fetch('/auth/mfa/validate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: currentUser, code})
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      localStorage.setItem('verisure_user', JSON.stringify({username: currentUser, password: currentPass}));
+      await enterDashboard();
+    } else {
+      showToast(data.detail || 'Invalid code', 'error');
+    }
+  } catch (err) {
+    showToast('Connection error', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify';
+  }
+}
+
+async function doLogout() {
+  await fetch('/auth/logout?username=' + encodeURIComponent(currentUser), {method: 'POST'});
+  localStorage.removeItem('verisure_user');
+  location.reload();
+}
+
+// -- Dashboard --
+
+async function enterDashboard() {
+  showDashboard();
+  await loadInstallations();
+}
+
+async function loadInstallations() {
+  try {
+    const res = await fetch('/auth/installations?username=' + encodeURIComponent(currentUser));
+    const data = await res.json();
+    if (!res.ok) { return; }
+    installations = data.installations || [];
+    if (installations.length === 0) return;
+
+    if (installations.length > 1) {
+      const chips = document.getElementById('install-chips');
+      document.getElementById('install-chips-section').style.display = 'block';
+      chips.innerHTML = '';
+      installations.forEach((inst, i) => {
+        const chip = document.createElement('div');
+        chip.className = 'install-chip' + (i === 0 ? ' active' : '');
+        chip.textContent = inst.alias || 'Installation ' + (i+1);
+        chip.onclick = () => selectInstallation(i);
+        chips.appendChild(chip);
+      });
+    }
+    selectInstallation(0);
+  } catch {}
+}
+
+function selectInstallation(idx) {
+  const inst = installations[idx];
+  if (!inst) return;
+  activeGiid = inst.giid;
+  activeAlias = inst.alias || 'Installation';
+
+  document.querySelectorAll('.install-chip').forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+
+  const link = document.getElementById('control-link');
+  link.href = `/verisure/control?username=${encodeURIComponent(currentUser)}&giid=${encodeURIComponent(activeGiid)}&alias=${encodeURIComponent(activeAlias)}`;
+
+  loadOverview();
+}
+
+async function loadOverview() {
+  try {
+    const res = await fetch('/auth/overview?username=' + encodeURIComponent(currentUser) +
+                            '&giid=' + encodeURIComponent(activeGiid));
+    const data = await res.json();
+    if (!res.ok) return;
+
+    // Alarm
+    const arm = data.arm_state || {};
+    const type = arm.type || 'UNKNOWN';
+    const cls = armClass(type);
+    document.getElementById('alarm-area').innerHTML = `
+      <div class="alarm-card">
+        <div class="alarm-icon ${cls}">${armEmoji(cls)}</div>
+        <div class="alarm-info">
+          <div class="alarm-status">${type.replace('ARMED_', 'Armed ')}</div>
+          <div class="alarm-meta">${arm.name || ''} &middot; ${fmtDate(arm.date)}</div>
+        </div>
+        <div class="alarm-badge ${cls}">${arm.statusType || type}</div>
+      </div>
+    `;
+
+    // Sensors
+    const dws = data.door_windows || [];
+    const grid = document.getElementById('sensor-grid');
+    if (dws.length === 0) {
+      grid.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:1/-1;">No sensors found</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    dws.forEach(dw => {
+      const name = dw.friendlyName || dw.device?.deviceLabel || '?';
+      const state = stateClass(dw.state);
+      const type = sensorType(name);
+      const icon = type === 'door'
+        ? (state === 'closed' ? '&#128274;' : '&#128275;')
+        : (state === 'closed' ? '&#10060;' : '&#128308;');
+      const doorWindowEmoji = type === 'door'
+        ? (state === 'closed' ? '&#128682;' : '&#128683;')
+        : (state === 'closed' ? '&#129695;' : '&#129695;');
+
+      const card = document.createElement('div');
+      card.className = `sensor-card ${state}`;
+      card.innerHTML = `
+        <div class="sensor-top">
+          <div class="sensor-icon ${type} ${state}">${doorWindowEmoji}</div>
+          <div class="sensor-dot ${state}"></div>
+        </div>
+        <div class="sensor-name" title="${name}">${name}</div>
+        <div class="sensor-time">${state === 'closed' ? 'Closed' : 'Open'} &middot; ${fmtDate(dw.reportTime)}</div>
+      `;
+      grid.appendChild(card);
+    });
+  } catch {}
+}
+
+// -- Init --
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('mfa-code').addEventListener('keydown', e => { if (e.key === 'Enter') doMfa(); });
+
+(async () => {
+  const resumed = await tryResume();
+  if (resumed) {
+    await enterDashboard();
+  }
+})();
+</script>
+
+</body>
+</html>
