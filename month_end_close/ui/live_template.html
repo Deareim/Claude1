@@ -1,0 +1,81 @@
+<title>Month-End Close</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--fg:#14202b;--mut:#5d6b78;--line:#dfe4ea;--acc:#0b6e8a;--ok:#1a7f4b;--warn:#a65f00;--bad:#b3261e;--okbg:#e3f4ea;--warnbg:#fdf0d8;--badbg:#fbe4e2;--accbg:#e1f0f5;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f161d;--panel:#17212b;--fg:#e6edf3;--mut:#93a3b1;--line:#27343f;--acc:#5ec0dd;--ok:#5fd394;--warn:#f0b35a;--bad:#ff8a80;--okbg:#14301f;--warnbg:#37290f;--badbg:#3a1815;--accbg:#12303b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f161d;--panel:#17212b;--fg:#e6edf3;--mut:#93a3b1;--line:#27343f;--acc:#5ec0dd;--ok:#5fd394;--warn:#f0b35a;--bad:#ff8a80;--okbg:#14301f;--warnbg:#37290f;--badbg:#3a1815;--accbg:#12303b;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,sans-serif;padding-inline:16px;padding-block:20px;max-width:1100px;margin:0 auto}
+h1{font-size:22px;margin:0}h2{font-size:15px;margin:28px 0 10px}
+.sub{color:var(--mut);margin:2px 0 16px}
+.top{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;min-width:0}
+.big{flex:1 1 280px}.bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:var(--ok)}
+.pct{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpis{display:flex;gap:16px;flex:2 1 400px;flex-wrap:wrap}.kpi{flex:1 1 110px}.kpi b{display:block;font-size:24px;font-variant-numeric:tabular-nums}.kpi span{color:var(--mut);font-size:12px}
+.steps{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.steps li{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.steps .own{color:var(--mut);font-size:12px}
+.pill{font-size:11px;padding:1px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.done,.approved,.AUTO{background:var(--okbg);color:var(--ok)}.blocked,.pending,.escalated{background:var(--warnbg);color:var(--warn)}.rejected,.error{background:var(--badbg);color:var(--bad)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:24px 0 10px}.tabs button{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font:inherit;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mut);font-size:12px;font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.log{font-family:var(--mono);font-size:12.5px;display:grid;gap:3px}.log div{display:grid;grid-template-columns:62px 190px 1fr;gap:8px}.log .t{font-weight:700}
+.log .reasoning .t{color:var(--mut)}.log .action .t{color:var(--acc)}.log .resolved .t{color:var(--ok)}.log .escalated .t{color:var(--warn)}.log .approval .t{color:#a24bb5}.log .info .t{color:var(--acc)}
+.stephd{margin:14px 0 4px;font-weight:700;font-family:system-ui}
+@media(max-width:640px){.log div{grid-template-columns:1fr}}
+.flag{color:var(--mut);font-size:12px}
+</style>
+<h1>Month-End Close <span id="per">2026-09</span> <span class="pill pending" id="live">waiting</span></h1>
+<p class="sub">Live view. This page updates as the agents work; items marked HUMAN went through the approval gate.</p>
+<div class="top">
+  <div class="card big"><div class="pct" id="pct">0.0%</div><div class="bar"><i id="barfill" style="width:0"></i></div><div id="state"></div></div>
+  <div class="card kpis" id="kpis"></div>
+</div>
+<h2>Close checklist</h2>
+<div class="card"><ul class="steps" id="steps"><li class="own">Waiting for the run to start...</li></ul></div>
+<h2>Agent log</h2>
+<div class="card" id="logv"><div class="own">No activity yet.</div></div>
+<div class="tabs" role="tablist" id="tabs" hidden></div>
+<div class="card" id="view" hidden></div>
+<script>
+const $=s=>document.querySelector(s),usd=n=>(n<0?"-":"")+"$"+Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}),
+esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const tag={reasoning:"think",action:"act",resolved:"AUTO",escalated:"ESCAL",approval:"HUMAN",info:"info",error:"ERROR"};
+let S={},F=null,cur="approvals";
+function tbl(h,rows,num){return `<div class="scroll"><table><thead><tr>${h.map((x,i)=>`<th class="${num.includes(i)?"n":""}">${x}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${num.includes(i)?"n":""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}
+const V={
+ approvals:()=>tbl(["ID","Category","Item","Amount","Status","Reviewer note"],F.approvals.map(a=>[a.req_id,a.category,esc(a.title),usd(a.amount),`<span class="pill ${a.status}">${a.status}</span>`,esc((a.decided_by||"")+" - "+(a.note||"awaiting reviewer"))]),[3]),
+ auto:()=>tbl(["Agent","Type","Resolution","Amount"],F.resolved.map(a=>[esc(a.agent),a.category,esc(a.description),a.amount?usd(a.amount):""]),[3]),
+ jes:()=>tbl(["JE","Source","Description","Amount","Approved by"],F.posted_jes.map(j=>[j.je_id,j.source,esc(j.description),usd(j.amount),j.approved_by]).concat(F.rejected.map(j=>[j.je_id,"manual",esc(j.description)+' <span class="pill rejected">REJECTED</span>',usd(j.amount),"-"])),[3]),
+ flux:()=>tbl(["Account","Prior","Current","Variance","%","Draft explanation"],F.commentary.map(c=>[c.account+" "+esc(c.name),c.prior.toLocaleString("en-US",{maximumFractionDigits:0}),c.current.toLocaleString("en-US",{maximumFractionDigits:0}),(c.variance>0?"+":"")+c.variance.toLocaleString("en-US",{maximumFractionDigits:0}),(c.pct*100).toFixed(1)+"%",esc(c.explanation)+`<div class="flag">flagged: ${esc(c.reason)}</div>`]),[1,2,3,4])
+};
+function render(){
+  const list=Object.values(S).sort((a,b)=>a.order-b.order);
+  if(!list.length)return;
+  const started=list.some(s=>s.status!=="pending"),firstOpen=list.find(s=>s.status==="pending");
+  const done=list.filter(s=>s.status==="done"||s.status==="blocked");
+  const pct=done.length?Math.max(...done.map(s=>s.pct)):0;
+  $("#pct").textContent=pct.toFixed(1)+"%";$("#barfill").style.width=pct+"%";
+  const complete=list.every(s=>s.status==="done");
+  $("#live").className="pill "+(complete?"done":started?"escalated":"pending");$("#live").textContent=complete?"complete":started?"running":"waiting";
+  $("#state").innerHTML=complete?'<span class="pill done">CLOSE COMPLETE</span>':(started?'<span class="pill escalated">in progress</span>':"");
+  $("#steps").innerHTML=list.map(s=>{const st=(s===firstOpen&&started)?"running":s.status;return `<li><b>${s.id}</b> ${esc(s.name)} <span class="own">${esc(s.owner)}</span><span class="pill ${st==="running"?"escalated":st}">${st==="running"?"running...":st}</span></li>`}).join("");
+  let h='<div class="log">';
+  for(const s of list){if(!s.events||!s.events.length)continue;h+=`<div class="stephd" style="display:block">${s.id} ${esc(s.name)}</div>`;
+    for(const e of s.events)h+=`<div class="${e.kind}"><span class="t">${tag[e.kind]||e.kind}</span><span>${esc(e.agent)}</span><span>${esc(e.message)}</span></div>`}
+  $("#logv").innerHTML=h+"</div>";
+  const kpi=[[list.reduce((n,s)=>n+(s.approvals||0),0),"escalations"],[list.reduce((n,s)=>n+(s.auto||0),0),"auto-resolved"],[F?F.posted_jes.length:"-","JEs posted"]];
+  $("#kpis").innerHTML=kpi.map(k=>`<div class="kpi card"><b>${k[0]}</b><span>${k[1]}</span></div>`).join("");
+  if(F){$("#tabs").hidden=false;$("#view").hidden=false;
+    $("#tabs").innerHTML=[["approvals","Human approvals ("+F.approvals.length+")"],["auto","Auto-resolved ("+F.resolved.length+")"],["jes","Journal entries"],["flux","Flux commentary"]].map(t=>`<button role="tab" data-k="${t[0]}" aria-selected="${t[0]===cur}">${t[1]}</button>`).join("");
+    $("#view").innerHTML=V[cur]()}
+}
+$("#tabs").onclick=e=>{if(e.target.dataset.k){cur=e.target.dataset.k;render()}};
+(async()=>{
+  const db=await claude.use("db");
+  if(!db){$("#steps").innerHTML='<li class="own">Live data unavailable. Open this page while signed in.</li>';return}
+  db.collection("steps").onSnapshot(s=>{S={};s.docs.forEach(d=>S[d.id]=d.data());render()});
+  db.collection("meta").onSnapshot(s=>{const d=s.docs.find(x=>x.id==="final");F=d&&d.exists?d.data():null;render()});
+})();
+</script>
