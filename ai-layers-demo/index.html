@@ -90,7 +90,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .on > .band-head .pill, .pill.lit{background:var(--lc);color:var(--surface)}
 .stack.rules-on .frame-label .pill{background:var(--govern);color:var(--surface)}
 .tech{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);display:none}
-.hood .tech{display:block}
+.hood-tech .tech{display:block}
+.sap{display:none;font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:2px 8px;border-radius:4px;background:var(--ink);color:var(--bg);justify-self:start;max-width:100%}
+.hood-sap .sap{display:inline-block}
+.hood-sap .stack{padding-top:50px}
+.row .sap{grid-column:2 / -1}
+.hoodbox{display:flex;align-items:center;gap:8px}
+.hoodbox > span{font-size:13.5px;color:var(--muted)}
 .bandctl{display:flex;gap:4px;margin-top:4px}
 .bandctl button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 6px;font-size:12.5px;color:var(--muted)}
 .bandctl button[aria-pressed="true"]{background:var(--lc);border-color:var(--lc);color:var(--surface);font-weight:700}
@@ -242,7 +248,7 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
       <button id="m-story" aria-pressed="true">Story</button>
       <button id="m-free" aria-pressed="false">Free play</button>
     </div>
-    <button class="switch" id="hood" aria-pressed="false"><span class="knob"></span>Under the hood</button>
+    <div class="hoodbox"><span>Under the hood</span><div class="seg" role="group" aria-label="Under the hood"><button data-view="off" aria-pressed="true">Off</button><button data-view="tech" aria-pressed="false">Tech</button><button data-view="sap" aria-pressed="false">SAP</button></div></div>
   </header>
 
   <nav class="rail" id="rail" aria-label="Story steps">
@@ -260,19 +266,19 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
       <aside class="side">
         <div class="stack" id="stack" aria-label="Layers">
           <div class="frame-label">
-            <span class="tag"><span class="eyebrow" style="color:inherit">Govern</span><b style="font-size:14px">Control &amp; trust</b></span>
+            <span class="tag"><span class="eyebrow" style="color:inherit">Govern</span><b style="font-size:14px">Control &amp; trust</b><span class="sap">SAP Business AI Platform · Govern</span></span>
             <span class="pill" id="rules-pill">Off</span>
           </div>
           <section class="band engage on" id="b-engage">
             <div class="band-head"><span><span class="eyebrow">Engage</span><br><span class="band-name">Assistant</span></span><span class="pill">Always on</span></div>
             <p>Ask in plain words. One place to start any request.</p>
-            <span class="tech">Conversational AI (language model) · chat entry point</span>
+            <span class="tech">Conversational AI (language model) · chat entry point</span><span class="sap">SAP Joule</span>
           </section>
           <div class="flow" aria-hidden="true">▼</div>
           <section class="band build" id="b-build">
             <div class="band-head"><span><span class="eyebrow">Build</span><br><span class="band-name">Agents</span></span><span class="pill" id="build-pill">Off</span></div>
             <p>Agents that do the work in the systems, alone or as a coordinated team.</p>
-            <span class="tech">Agents with tools (APIs) · orchestration / coordinator</span>
+            <span class="tech">Agents with tools (APIs) · orchestration / coordinator</span><span class="sap">Joule Studio agents · Integration Suite</span>
             <div class="bandctl" role="group" aria-label="Agents">
               <button data-agents="0">Off</button><button data-agents="1">One agent</button><button data-agents="2">Team</button>
             </div>
@@ -281,14 +287,14 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
           <section class="band data" id="b-data">
             <div class="band-head"><span><span class="eyebrow">Contextualize</span><br><span class="band-name">Company data</span></span><span class="pill" id="data-pill">Off</span></div>
             <p>Real invoices, contracts and deliveries, with their business meaning.</p>
-            <span class="tech">Grounding · retrieval on business records + semantics</span>
+            <span class="tech">Grounding · retrieval on business records + semantics</span><span class="sap">SAP Business Data Cloud · Knowledge Graph</span>
             <div class="bandctl" role="group" aria-label="Company data">
               <button data-data="0">Off</button><button data-data="1">On</button>
             </div>
           </section>
           <div class="gparts" role="group" aria-label="Govern parts">
-            <div class="gpart" id="g-ids"><div><b>Agent IDs &amp; access</b><span class="sub">Each agent has its own ID and only the rights its job needs.</span><span class="tech">identity provider · per-agent credentials · least-privilege scopes</span></div><button class="gtog" data-g="ids" aria-pressed="false">Off</button></div>
-            <div class="gpart" id="g-checks"><div><b>Live checks &amp; approvals</b><span class="sub">Limits checked while agents work. A person decides above a limit. Everything logged.</span><span class="tech">policy runtime · human-approval workflow · audit trail</span></div><button class="gtog" data-g="checks" aria-pressed="false">Off</button></div>
+            <div class="gpart" id="g-ids"><div><b>Agent IDs &amp; access</b><span class="sub">Each agent has its own ID and only the rights its job needs.</span><span class="tech">identity provider · per-agent credentials · least-privilege scopes</span><span class="sap">Identity, Access &amp; Security</span></div><button class="gtog" data-g="ids" aria-pressed="false">Off</button></div>
+            <div class="gpart" id="g-checks"><div><b>Live checks &amp; approvals</b><span class="sub">Limits checked while agents work. A person decides above a limit. Everything logged.</span><span class="tech">policy runtime · human-approval workflow · audit trail</span><span class="sap">Joule Studio runtime · AI Agent Hub</span></div><button class="gtog" data-g="checks" aria-pressed="false">Off</button></div>
           </div>
         </div>
 
@@ -567,7 +573,7 @@ function showBuilder(){
     <div class="bbody">
       <div class="blabel">Describe the job in plain words</div>
       <div class="prompt" id="bprompt"><span class="ph">For example: when a customer says an invoice is wrong…</span></div>
-      <span class="tech">low-code agent builder · natural language → agent definition (instructions, tools, trigger) · connectors to business systems via APIs</span>
+      <span class="tech">low-code agent builder · natural language → agent definition (instructions, tools, trigger) · connectors to business systems via APIs</span><span class="sap">SAP Joule Studio · no-code agent builder</span>
       <div id="bout"></div>
       <div class="bactions" id="bact"><button class="btn build" id="bdesc">▶ Describe the job</button><span class="note">You are Sam, team lead in customer service. Not a developer.</span></div>
     </div>`;
@@ -590,7 +596,7 @@ function showBuilder(){
       ['Job', 'Fix invoice errors with a credit note. Change customer prices when asked.'],
       ['Starts when', 'A customer complaint mentions an invoice.'],
       ['Steps it will follow', '<ol><li>Read the complaint</li><li>Work out the right amount</li><li>Create the credit note</li><li>Update prices if asked</li></ol>'],
-      ['Connected to', '<div class="plugs"><span class="plug">Invoices</span><span class="plug">Credit notes</span><span class="plug">Customer prices</span></div><span class="tech">tools: invoice.read · credit_note.create · pricing.update</span>'],
+      ['Connected to', '<div class="plugs"><span class="plug">Invoices</span><span class="plug">Credit notes</span><span class="plug">Customer prices</span></div><span class="tech">tools: invoice.read · credit_note.create · pricing.update</span><span class="sap">via SAP Integration Suite connectors</span>'],
     ];
     for (const [k, v] of fields) {
       await sleep(350); if (id !== runId) return;
@@ -660,15 +666,27 @@ function paintTiles(sc){
   tilesEl.innerHTML = tile('Right facts?', sc.facts) + tile('Problems fixed', sc.fixed) + tile('Time for your team', sc.time) + tile('Risk', sc.risk);
 }
 
+function sapTag(it){
+  if (it.t === 'chat') return it.who === 'ai' ? 'SAP Joule' : '';
+  const a = it.actor.replace(/<.*$/, '');
+  if (a === 'Company data') return it.layer === 'off' ? 'SAP Business Data Cloud · not connected' : 'SAP Business Data Cloud · Knowledge Graph';
+  if (a === 'Agent IDs') return it.layer === 'off' ? 'No Identity, Access & Security: one shared login' : 'Identity, Access & Security';
+  if (a === 'Live checks') return 'Joule Studio runtime';
+  if (a === 'Audit log') return 'SAP AI Agent Hub';
+  if (a === 'Coordinator') return 'Joule Studio · agent orchestration';
+  if (/agent$/.test(a)) return /Denied/.test(it.html) ? 'Identity, Access & Security · scope check' : (/class="src"/.test(it.html) ? 'Joule Studio agent · Business Data Cloud · Integration Suite' : 'Joule Studio agent · Integration Suite');
+  return '';
+}
 function renderItem(it){
+  const sap = sapTag(it), sapHtml = sap ? `<span class="sap">${sap}</span>` : '';
   const el = document.createElement('div');
   if (it.t === 'chat') {
     el.className = 'msg ' + it.who;
-    el.innerHTML = `<div class="who">${it.who === 'you' ? 'You · service desk' : 'Assistant'}</div>${it.who === 'you' ? `<p>${it.html}</p>` : it.html}${it.tech ? `<span class="tech">${it.tech}</span>` : ''}`;
+    el.innerHTML = `<div class="who">${it.who === 'you' ? 'You · service desk' : 'Assistant'}</div>${it.who === 'you' ? `<p>${it.html}</p>` : it.html}${it.tech ? `<span class="tech">${it.tech}</span>` : ''}${sapHtml}`;
     chatEl.appendChild(el);
   } else {
     el.className = 'row l-' + it.layer;
-    el.innerHTML = `<span class="dot"></span><div><div class="actor">${it.actor}</div><div class="txt">${it.html}</div></div><span class="st ${it.status[1]}">${it.status[0]}</span>${it.tech ? `<span class="tech">${it.tech}</span>` : ''}`;
+    el.innerHTML = `<span class="dot"></span><div><div class="actor">${it.actor}</div><div class="txt">${it.html}</div></div><span class="st ${it.status[1]}">${it.status[0]}</span>${it.tech ? `<span class="tech">${it.tech}</span>` : ''}${sapHtml}`;
     workEl.appendChild(el);
   }
   return el;
@@ -691,7 +709,7 @@ async function run(){
       const el = document.createElement('div');
       el.className = 'row l-govern';
       el.innerHTML = `<span class="dot"></span><div><div class="actor">Live checks · approval needed</div><div class="txt">Credit note of <b>€1,500</b> for Alpine Foods is above the agent limit of €1,000. Based on ${S('INV-4471')} ${S('CTR-118')}.</div></div><span class="st wait">waiting</span>
-        <div class="gate pulse"><button class="btn ok">Approve €1,500</button><button class="btn no">Reject</button><span class="hint">You are the finance approver. The agents wait for your decision.</span></div>`;
+        <div class="gate pulse"><button class="btn ok">Approve €1,500</button><button class="btn no">Reject</button><span class="hint">You are the finance approver. The agents wait for your decision.</span></div><span class="sap">Joule Studio runtime · human approval</span>`;
       workEl.appendChild(el);
       const decision = await new Promise(res => {
         el.querySelector('.ok').onclick = () => res(true); el.querySelector('.no').onclick = () => res(false); });
@@ -761,7 +779,11 @@ $('#prev').onclick = () => go(st.scene - 1);
 $('#next').onclick = () => go(st.scene + 1);
 $('#run').onclick = () => run();
 $('#skip').onclick = () => { fast = true; };
-$('#hood').onclick = e => { st.hood = !st.hood; e.currentTarget.setAttribute('aria-pressed', st.hood); app.classList.toggle('hood', st.hood); };
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
+  const v = b.dataset.view;
+  document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  app.classList.toggle('hood-tech', v === 'tech'); app.classList.toggle('hood-sap', v === 'sap');
+});
 document.querySelectorAll('[data-agents]').forEach(b => b.onclick = () => { st.free.agents = +b.dataset.agents; paintStack(st.free); run(); });
 document.querySelectorAll('[data-data]').forEach(b => b.onclick = () => { st.free.data = !!+b.dataset.data; paintStack(st.free); run(); });
 document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { if (st.mode !== 'free') return; st.free[b.dataset.g] = !st.free[b.dataset.g]; paintStack(st.free); run(); });
