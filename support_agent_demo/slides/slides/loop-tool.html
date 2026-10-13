@@ -1,0 +1,37 @@
+<section id="loop-tool" data-transition="fade" style="background:#f6f7fa;color:#16202c;font-family:'Figtree', Arial, sans-serif;padding:100px 128px 100px;display:flex;flex-direction:column;gap:22px">
+<div style="width:600px;display:flex;flex-direction:column;gap:22px">
+<p style="font-size:26px;font-weight:700;color:#1f7ac7;letter-spacing:3px;text-transform:uppercase">Loop 4 of 4</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:56px;font-weight:700;line-height:1.1;color:#16202c">Tool retry</h2>
+<p style="font-size:30px;line-height:1.4;color:#3d4a5c">A system fails, so the agent waits and tries again.</p>
+<div style="display:flex;flex-direction:column;gap:4px"><p style="font-size:24px;font-weight:700;color:#5a6878;text-transform:uppercase;letter-spacing:2px">Trigger</p><p style="font-size:26px;line-height:1.35">The order database doesn't answer.</p></div>
+<div style="display:flex;flex-direction:column;gap:4px"><p style="font-size:24px;font-weight:700;color:#1f7ac7;text-transform:uppercase;letter-spacing:2px">Goes back</p><p style="font-size:26px;line-height:1.35">Wait 1 s, then 2 s, and call the database again.</p></div>
+<div style="display:flex;flex-direction:column;gap:4px"><p style="font-size:24px;font-weight:700;color:#9a5300;text-transform:uppercase;letter-spacing:2px">Stop rule</p><p style="font-size:26px;line-height:1.35">After 3 failures, a person takes over.</p></div>
+<div style="display:flex;flex-direction:column;gap:4px"><p style="font-size:24px;font-weight:700;color:#5a6878;text-transform:uppercase;letter-spacing:2px">Try it</p><p style="font-size:26px;line-height:1.35">Switch: fails once, fails twice, or database is down.</p></div>
+</div>
+<p style="position:absolute;left:840px;top:155px;width:400px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#e9edf2;border:3px solid #47566a;border-radius:35px">Customer sends<br>the complaint</p>
+<p style="position:absolute;left:840px;top:265px;width:400px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#ffffff;border:2px solid #c9d2dd;border-radius:12px">Triage Agent<br>understands it</p>
+<p style="position:absolute;left:840px;top:375px;width:400px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#ffffff;border:2px solid #c9d2dd;border-radius:12px">Order Agent<br>calls the database</p>
+<p style="position:absolute;left:840px;top:485px;width:400px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:700;text-align:center;background:#e7edfc;color:#1f45b0;border:3px solid #2f5bd8;border-radius:35px">Database<br>answered?</p>
+<p style="position:absolute;left:840px;top:595px;width:400px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#ffffff;border:2px solid #c9d2dd;border-radius:12px">Resolution Agent<br>decides</p>
+<p style="position:absolute;left:840px;top:705px;width:400px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#ffffff;border:2px solid #c9d2dd;border-radius:12px">Safety rule<br>(over €100: manager)</p>
+<p style="position:absolute;left:840px;top:815px;width:400px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#e9edf2;border:3px solid #47566a;border-radius:35px">Answer sent<br>to the customer</p>
+<p style="position:absolute;left:1330px;top:375px;width:370px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#e5f1fb;border:3px dashed #1f7ac7;border-radius:12px">Wait (1 s, 2 s...)<br>then try again</p>
+<p style="position:absolute;left:1330px;top:485px;width:370px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:700;text-align:center;background:#e7edfc;color:#1f45b0;border:3px solid #2f5bd8;border-radius:35px">Tries left?<br>(max 3)</p>
+<p style="position:absolute;left:1330px;top:595px;width:370px;height:70px;padding:6px 16px;font-size:24px;line-height:1.2;font-weight:600;text-align:center;background:#fdf0dc;border:3px solid #c26a00;border-radius:12px">Hand over: the<br>system is down</p>
+<x-connector x1="1040" y1="225" x2="1040" y2="265" head="end" style="color:#8794a6;border-width:3px"></x-connector>
+<x-connector x1="1040" y1="335" x2="1040" y2="375" head="end" style="color:#8794a6;border-width:3px"></x-connector>
+<x-connector x1="1040" y1="445" x2="1040" y2="485" head="end" style="color:#8794a6;border-width:3px"></x-connector>
+<x-connector x1="1040" y1="555" x2="1040" y2="595" head="end" style="color:#8794a6;border-width:3px"></x-connector>
+<x-connector x1="1040" y1="665" x2="1040" y2="705" head="end" style="color:#8794a6;border-width:3px"></x-connector>
+<x-connector x1="1040" y1="775" x2="1040" y2="815" head="end" style="color:#8794a6;border-width:3px"></x-connector>
+<x-connector x1="1240" y1="520" x2="1330" y2="520" head="end" style="color:#8794a6;border-width:3px"></x-connector>
+<x-connector x1="1515" y1="485" x2="1515" y2="445" head="end" style="color:#1f7ac7;border-width:4px;border-style:dashed"></x-connector>
+<x-connector x1="1330" y1="410" x2="1240" y2="410" head="end" style="color:#1f7ac7;border-width:4px;border-style:dashed"></x-connector>
+<x-connector x1="1515" y1="555" x2="1515" y2="595" head="end" style="color:#c26a00;border-width:3px"></x-connector>
+<x-connector x1="1515" y1="665" x2="1240" y2="850" route="vh" head="end" style="color:#c26a00;border-width:3px"></x-connector>
+<p style="position:absolute;left:1054px;top:559px;width:80px;font-size:24px;font-weight:700;color:#1c8a4a">Yes</p>
+<p style="position:absolute;left:1252px;top:482px;width:70px;font-size:24px;font-weight:700;color:#b8322a">No</p>
+<p style="position:absolute;left:1529px;top:448px;width:80px;font-size:24px;font-weight:700;color:#1f7ac7">Yes</p>
+<p style="position:absolute;left:1529px;top:559px;width:80px;font-size:24px;font-weight:700;color:#b8322a">No</p>
+<aside>Real systems fail: a database times out, an API is busy. A script would crash. An agent waits a moment and tries again, waiting a little longer each time: 1 second, then 2. That's the dashed blue loop. If the system is still down after three tries, the stop rule hands the case to a person with an honest message instead of retrying forever. In the demo, pick loop 4 and set the switch to "fails once" or "fails twice" to see recovery, or "database is down" to hit the stop rule.</aside>
+</section>
