@@ -1,0 +1,828 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Complaint, Six Ways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ops-console. Left = the layer stack (rules drawn as a frame around the other layers) + case file.
+   Right = the case being worked: request, conversation, work log, outcome. One hue per layer. */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#E9EDF2; --ink:#14202E; --muted:#596777; --line:#D2D9E2;
+  --engage:#2459C9; --build:#6A44C1; --data:#0A7C78; --govern:#A12D62;
+  --good:#1D7A3A; --bad:#C2352B; --warn:#9A6206;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E141C; --surface:#161F2A; --surface-2:#1E2935; --ink:#E5EBF2; --muted:#98A6B6; --line:#2B3846;
+    --engage:#7EA4F4; --build:#A98BEB; --data:#4CC2BA; --govern:#E67CAB;
+    --good:#5CC27A; --bad:#F07B70; --warn:#E2A94B; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E141C; --surface:#161F2A; --surface-2:#1E2935; --ink:#E5EBF2; --muted:#98A6B6; --line:#2B3846;
+  --engage:#7EA4F4; --build:#A98BEB; --data:#4CC2BA; --govern:#E67CAB;
+  --good:#5CC27A; --bad:#F07B70; --warn:#E2A94B; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 40px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--engage);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto}
+
+/* top bar */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:16px 12px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin-right:auto}
+.brand small{display:block;font-family:var(--f-body);font-weight:400;font-size:12.5px;color:var(--muted);letter-spacing:0}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-size:13.5px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .12);font-weight:700}
+
+/* step rail */
+.rail{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-block:14px 6px}
+.rail ol{display:flex;gap:6px;list-style:none;margin:0;padding:2px;flex:1 1 0;min-width:0;overflow-x:auto}
+.rail li button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap;color:var(--muted)}
+.rail li button[aria-current="step"]{border-color:var(--ink);color:var(--ink);font-weight:700}
+.rail li button.seen{color:var(--ink)}
+.nav{display:flex;gap:6px;margin-left:auto}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-size:13.5px;white-space:nowrap}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* caption */
+.caption{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px 32px;padding-block:14px 18px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--lc,var(--muted))}
+.caption h1{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,3.2vw,34px);line-height:1.12;letter-spacing:-.015em;margin:4px 0 8px;text-wrap:balance}
+.caption p{margin:0;color:var(--muted);max-width:62ch}
+.notice{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;align-self:start}
+.notice h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
+.notice ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:5px 12px;font-size:13px}
+
+/* main grid */
+.main{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.side{display:grid;gap:16px}
+
+/* the stack */
+.stack{position:relative;border:2px dashed var(--line);border-radius:14px;padding:30px 10px 10px;display:grid;gap:8px;transition:border-color .3s,background .3s}
+.stack.rules-on{border-style:solid;border-color:var(--govern);background:color-mix(in srgb,var(--govern) 6%,transparent)}
+.frame-label{position:absolute;top:-12px;left:12px;right:12px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.frame-label .tag{background:var(--bg);padding:0 6px;display:flex;flex-direction:column;line-height:1.2}
+.stack.rules-on .frame-label .tag{color:var(--govern)}
+.band{--lc:var(--muted);border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;display:grid;gap:4px;transition:background .3s,border-color .3s,opacity .3s}
+.band.on{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 6%,var(--surface))}
+.band.off{border-style:dashed;background:var(--bg)}
+.band.off .band-name,.band.off .eyebrow,.gpart.off b{color:var(--muted)}
+.band.engage{--lc:var(--engage)} .band.build{--lc:var(--build)} .band.data{--lc:var(--data)}
+.band-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.band-name{font-weight:700;font-size:15px}
+.band p{margin:0;font-size:13px;color:var(--muted)}
+.pill{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.on > .band-head .pill, .pill.lit{background:var(--lc);color:var(--surface)}
+.stack.rules-on .frame-label .pill{background:var(--govern);color:var(--surface)}
+.tech{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);display:none}
+.hood-tech .tech{display:block}
+.sap{display:none;font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:2px 8px;border-radius:4px;background:var(--ink);color:var(--bg);justify-self:start;max-width:100%}
+.hood-sap .sap{display:inline-block}
+.hood-sap .stack{padding-top:50px}
+.row .sap{grid-column:2 / -1}
+.hoodbox{display:flex;align-items:center;gap:8px}
+.hoodbox > span{font-size:13.5px;color:var(--muted)}
+.bandctl{display:flex;gap:4px;margin-top:4px}
+.bandctl button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 6px;font-size:12.5px;color:var(--muted)}
+.bandctl button[aria-pressed="true"]{background:var(--lc);border-color:var(--lc);color:var(--surface);font-weight:700}
+.bandctl button[data-agents="0"][aria-pressed="true"],.bandctl button[data-data="0"][aria-pressed="true"]{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.gparts{display:grid;gap:6px;margin-top:2px}
+.gpart{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;border:1px dashed var(--line);background:var(--surface);font-size:13.5px;transition:background .3s,border-color .3s}
+.gpart > div{display:grid;gap:2px;min-width:0}
+.gpart .sub{font-size:12.5px;color:var(--muted)}
+.gpart.on{border:1px solid var(--govern);background:color-mix(in srgb,var(--govern) 9%,var(--surface))}
+.gpart.off{background:var(--bg)}
+.gtog{flex:none;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.gtog[aria-pressed="true"]{background:var(--govern);border-color:var(--govern);color:var(--surface)}
+.story .gtog{cursor:default;pointer-events:none}
+.idb{font-family:var(--f-mono);font-size:10.5px;font-weight:500;letter-spacing:0;text-transform:none;padding:0 5px;margin-left:6px;border-radius:4px;border:1px solid currentColor;color:var(--govern)}
+.idlist{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.idlist span{font-size:12px;padding:1px 7px;border-radius:4px;background:var(--surface-2)}
+.idlist b{font-family:var(--f-mono);font-size:11px;color:var(--govern);margin-right:4px}
+.runview{display:grid;gap:16px;min-width:0}
+.builder{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.builder > h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0;padding:10px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.bbody{padding:16px;display:grid;gap:14px}
+.bbody > .tech{margin-top:-6px}
+.blabel{font-size:13px;font-weight:700}
+.prompt{border:1.5px solid var(--build);border-radius:10px;padding:12px 14px;min-height:80px;font-size:17px;line-height:1.45;background:color-mix(in srgb,var(--build) 5%,var(--surface))}
+.prompt .ph{color:var(--muted)}
+.caret{display:inline-block;width:2px;height:1.05em;margin-left:1px;background:var(--build);vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
+.bactions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bactions .note{font-size:13px;color:var(--muted)}
+.btn.build{background:var(--build);border-color:var(--build);color:var(--surface);font-weight:700}
+.agentcard{border:1px solid var(--build);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;background:color-mix(in srgb,var(--build) 4%,var(--surface))}
+.agentcard .head{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.agentcard .head b{font-family:var(--f-display);font-size:20px}
+.field{display:grid;gap:4px;align-content:start;animation:in .35s ease both}
+.field .k{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.field ol{margin:0;padding-left:18px;display:grid;gap:2px}
+.plugs{display:flex;flex-wrap:wrap;gap:6px}
+.plug{display:inline-flex;gap:6px;align-items:center;font-size:13px;padding:3px 10px;border-radius:999px;border:1px solid var(--build);color:var(--build);background:var(--surface)}
+.plug::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--build)}
+.live{font-size:14px;color:var(--good);font-weight:700}
+@media (max-width: 720px){.agentcard{grid-template-columns:minmax(0,1fr)}}
+.story .bandctl{display:none}
+.flow{display:flex;justify-content:center;color:var(--muted);font-size:12px;line-height:1;margin-block:-4px}
+
+/* case file */
+.casefile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.casefile summary{cursor:pointer;font-weight:700;font-size:14px}
+.casefile summary span{font-weight:400;color:var(--muted);font-size:12.5px}
+.casefile dl{margin:10px 0 0;display:grid;gap:8px}
+.casefile dt{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.casefile dd{margin:0;font-size:13.5px}
+
+/* workspace */
+.ws{display:grid;gap:16px;min-width:0}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:6px}
+.mail .meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.mail .subj{font-weight:700}
+.mail p{margin:0;max-width:75ch;font-size:14px}
+.runbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.runbar .cfg{font-size:13px;color:var(--muted);margin-left:auto}
+.panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-width:0;min-height:300px}
+.panel > h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0;padding:10px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.feed{padding:12px 14px;display:grid;gap:10px;align-content:start}
+.empty{color:var(--muted);font-size:13.5px;padding:8px 0}
+
+/* chat */
+.msg{max-width:92%;padding:9px 12px;border-radius:12px;font-size:14px;animation:in .35s ease both}
+.msg.you{justify-self:end;background:var(--surface-2);border-bottom-right-radius:4px}
+.msg.ai{justify-self:start;background:color-mix(in srgb,var(--engage) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--engage) 35%,transparent);border-bottom-left-radius:4px}
+.msg .who{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.msg.ai .who{color:var(--engage)}
+.msg p{margin:0 0 6px} .msg p:last-child{margin:0}
+.typing{display:inline-flex;gap:4px;padding:12px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--engage);opacity:.4;animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.src{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:4px;background:color-mix(in srgb,var(--data) 6%,var(--surface));color:var(--data);border:1px solid color-mix(in srgb,var(--data) 40%,transparent);white-space:nowrap}
+.wrong{text-decoration:underline wavy var(--bad);text-underline-offset:3px;font-weight:700}
+.real{font-size:11.5px;font-weight:700;color:var(--bad);margin-left:4px;white-space:nowrap;text-decoration:none;display:inline-block}
+.risky{background:color-mix(in srgb,var(--bad) 13%,transparent);padding:0 3px;border-radius:3px;font-weight:700}
+
+/* work log */
+.row{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:4px 10px;align-items:start;animation:in .35s ease both}
+.row .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--lc)}
+.row .actor{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--lc)}
+.row .txt{font-size:14px}
+.row .tech{grid-column:2 / -1}
+.row.l-build{--lc:var(--build)} .row.l-data{--lc:var(--data)} .row.l-govern{--lc:var(--govern)} .row.l-people{--lc:var(--muted)} .row.l-engage{--lc:var(--engage)}
+.row.l-off .dot{background:transparent;border:2px dashed var(--line)} .row.l-off{--lc:var(--muted)}
+.st{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid currentColor}
+.st.done{color:var(--good)} .st.wrong{color:var(--bad)} .st.risk{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+.st.blocked{color:var(--govern)} .st.routed{color:var(--govern)} .st.manual{color:var(--warn)} .st.info{color:var(--muted)} .st.wait{color:var(--govern);background:color-mix(in srgb,var(--govern) 12%,transparent)}
+.gate{grid-column:2 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px;padding:10px;border-radius:8px;border:1px dashed var(--govern);background:color-mix(in srgb,var(--govern) 7%,transparent)}
+.gate .btn.ok{background:var(--good);border-color:var(--good);color:var(--surface);font-weight:700}
+.gate .btn.no{color:var(--bad)}
+.gate .hint{font-size:12.5px;color:var(--muted);flex-basis:100%}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+.handoff{grid-column:2 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border-radius:8px;border:1px dashed var(--build);background:color-mix(in srgb,var(--build) 5%,var(--surface))}
+.handoff .btn{background:var(--build);border-color:var(--build);color:var(--surface);font-weight:700}
+.handoff .hint{font-size:12.5px;color:var(--muted)}
+
+/* outcome */
+.outcome h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:2px;align-content:start;border-top:3px solid var(--sc,var(--line))}
+.tile .k{font-size:12px;color:var(--muted);font-weight:700}
+.tile .v{font-family:var(--f-display);font-weight:700;font-size:20px;line-height:1.2;color:var(--sc,var(--ink))}
+.tile .s{font-size:12.5px;color:var(--muted)}
+.tile ul{margin:2px 0 0;padding-left:16px;font-size:12.5px;color:var(--muted)}
+.lv-good{--sc:var(--good)} .lv-bad{--sc:var(--bad)} .lv-warn{--sc:var(--warn)} .lv-none{--sc:var(--line)}
+.tile.lv-none .v{color:var(--muted)}
+
+/* recap */
+.recap{display:grid;gap:20px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+tbody tr:last-child td{border-bottom:0}
+td .c{font-weight:700;color:var(--sc)}
+td .layers{display:flex;flex-wrap:wrap;gap:4px}
+td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;color:var(--surface);background:var(--lc)}
+.takeaways{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.take{--lc:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.take .eyebrow{color:var(--lc)}
+.take b{display:block;font-family:var(--f-display);font-size:18px;margin:4px 0}
+.take p{margin:0;font-size:13.5px;color:var(--muted)}
+.take.engage{--lc:var(--engage)} .take.build{--lc:var(--build)} .take.data{--lc:var(--data)} .take.govern{--lc:var(--govern)}
+
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes blink{50%{opacity:1}}
+@keyframes pulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--govern) 25%,transparent)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width: 980px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .side{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .tiles,.takeaways{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 720px){
+  .caption,.panels,.side{grid-template-columns:minmax(0,1fr)}
+  .nav{margin-left:0}
+}
+@media (max-width: 440px){
+  .tiles,.takeaways{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+
+<div class="wrap story" id="app">
+  <header class="top">
+    <div class="brand">One Complaint, Six Ways<small>Brightline Pumps · customer service · a simulated case</small></div>
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="m-story" aria-pressed="true">Story</button>
+      <button id="m-free" aria-pressed="false">Free play</button>
+    </div>
+    <div class="hoodbox"><span>Under the hood</span><div class="seg" role="group" aria-label="Under the hood"><button data-view="off" aria-pressed="true">Off</button><button data-view="tech" aria-pressed="false">Tech</button><button data-view="sap" aria-pressed="false">SAP</button></div></div>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Story steps">
+    <ol id="steps"></ol>
+    <div class="nav">
+      <button class="btn" id="prev">← Back</button>
+      <button class="btn primary" id="next">Next →</button>
+    </div>
+  </nav>
+
+  <section class="caption" id="caption"></section>
+
+  <div id="stage">
+    <div class="main">
+      <aside class="side">
+        <div class="stack" id="stack" aria-label="Layers">
+          <div class="frame-label">
+            <span class="tag"><span class="eyebrow" style="color:inherit">Govern</span><b style="font-size:14px">Control &amp; trust</b><span class="sap">SAP Business AI Platform · Govern</span></span>
+            <span class="pill" id="rules-pill">Off</span>
+          </div>
+          <section class="band engage on" id="b-engage">
+            <div class="band-head"><span><span class="eyebrow">Engage</span><br><span class="band-name">Assistant</span></span><span class="pill">Always on</span></div>
+            <p>Ask in plain words. One place to start any request.</p>
+            <span class="tech">Conversational AI (language model) · chat entry point</span><span class="sap">SAP Joule</span>
+          </section>
+          <div class="flow" aria-hidden="true">▼</div>
+          <section class="band build" id="b-build">
+            <div class="band-head"><span><span class="eyebrow">Build</span><br><span class="band-name">Agents</span></span><span class="pill" id="build-pill">Off</span></div>
+            <p>Agents that do the work in the systems, alone or as a coordinated team.</p>
+            <span class="tech">Agents with tools (APIs) · orchestration / coordinator</span><span class="sap">Joule Studio agents · Integration Suite</span>
+            <div class="bandctl" role="group" aria-label="Agents">
+              <button data-agents="0">Off</button><button data-agents="1">One agent</button><button data-agents="2">Team</button>
+            </div>
+          </section>
+          <div class="flow" aria-hidden="true">▼</div>
+          <section class="band data" id="b-data">
+            <div class="band-head"><span><span class="eyebrow">Contextualize</span><br><span class="band-name">Company data</span></span><span class="pill" id="data-pill">Off</span></div>
+            <p>Real invoices, contracts and deliveries, with their business meaning.</p>
+            <span class="tech">Grounding · retrieval on business records + semantics</span><span class="sap">SAP Business Data Cloud · Knowledge Graph</span>
+            <div class="bandctl" role="group" aria-label="Company data">
+              <button data-data="0">Off</button><button data-data="1">On</button>
+            </div>
+          </section>
+          <div class="gparts" role="group" aria-label="Govern parts">
+            <div class="gpart" id="g-ids"><div><b>Agent IDs &amp; access</b><span class="sub">Each agent has its own ID and only the rights its job needs.</span><span class="tech">identity provider · per-agent credentials · least-privilege scopes</span><span class="sap">Identity, Access &amp; Security</span></div><button class="gtog" data-g="ids" aria-pressed="false">Off</button></div>
+            <div class="gpart" id="g-checks"><div><b>Live checks &amp; approvals</b><span class="sub">Limits checked while agents work. A person decides above a limit. Everything logged.</span><span class="tech">policy runtime · human-approval workflow · audit trail</span><span class="sap">Joule Studio runtime · AI Agent Hub</span></div><button class="gtog" data-g="checks" aria-pressed="false">Off</button></div>
+          </div>
+        </div>
+
+        <details class="casefile" id="casefile" open>
+          <summary>Case file <span>· the real facts, to check the AI against</span></summary>
+          <dl>
+            <div><dt>INV-4471 · invoice</dt><dd>10 × pump BP-350 at €1,250 = <b>€12,500</b></dd></div>
+            <div><dt>CTR-118 · contract</dt><dd>12% volume discount → should be <b>€11,000</b>. Overcharged by <b>€1,500</b>.</dd></div>
+            <div><dt>DN-8820 · delivery note</dt><dd><b>2 × BP-350</b> signed as damaged on arrival.</dd></div>
+            <div><dt>Sales history</dt><dd>Alpine Foods buys ≈ €250,000 a year. 15% off = <b>€37,500 a year</b>.</dd></div>
+            <div><dt>Company rules</dt><dd>Agents may credit up to €1,000 alone. Only account managers change prices.</dd></div>
+          </dl>
+        </details>
+      </aside>
+
+      <div class="ws">
+        <section class="builder" id="builder" hidden aria-label="Agent builder"></section>
+        <div class="runview" id="runview">
+        <article class="mail" aria-label="Customer email">
+          <div class="meta"><span>From: purchasing@alpinefoods.example</span><span>To: service@brightline.example</span><span>Today, 08:12</span></div>
+          <div class="subj">Invoice INV-4471: wrong price and damaged pumps</div>
+          <p>Hello, your invoice INV-4471 charges €12,500 for 10 BP-350 pumps. Our agreement includes a discount, so it should be lower. Also, 2 pumps arrived damaged. Given the trouble, we expect 15% off all our future orders. Regards, Alpine Foods Purchasing</p>
+        </article>
+
+        <div class="runbar">
+          <button class="btn primary" id="run">▶ Run</button>
+          <button class="btn" id="skip">Show all at once</button>
+          <span class="cfg" id="cfg"></span>
+        </div>
+
+        <div class="panels">
+          <section class="panel"><h2><span>Conversation</span><span>Engage</span></h2><div class="feed" id="chat"></div></section>
+          <section class="panel"><h2><span>What's happening</span><span id="clock"></span></h2><div class="feed" id="work"></div></section>
+        </div>
+
+        <section class="outcome" aria-label="Outcome">
+          <h2>Outcome</h2>
+          <div class="tiles" id="tiles"></div>
+        </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="recap" class="recap" hidden></div>
+</div>
+
+<script>
+(() => {
+document.documentElement.lang = 'en';
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- text helpers ---------- */
+const W = (t, real) => `<span class="wrong">${t}</span><span class="real">✗ real: ${real}</span>`;
+const R = t => `<span class="risky">${t}</span>`;
+const S = id => `<span class="src">${id}</span>`;
+const OFF = {agents:0, data:false, ids:false, checks:false};
+
+/* ---------- story ---------- */
+const SCENES = [
+  { label:'The case', eyebrow:'The case', lc:'var(--muted)', cfg:null,
+    title:'One customer complaint. Six ways to handle it.',
+    body:'A customer says they were overcharged, received damaged goods, and wants a discount. We run the same complaint six times and add one layer each time.',
+    notice:['The case file on the left holds the real facts. Use it to check every answer.','Watch the layer stack: each step switches one more layer on.','Press Start to begin.'] },
+  { label:'Assistant', eyebrow:'Engage', lc:'var(--engage)', cfg:{agents:0,data:false,ids:false,checks:false},
+    title:'An assistant you can talk to',
+    body:'You ask in plain words and get an answer in plain words. Nothing else is switched on yet.',
+    notice:['It sounds sure, but the numbers are guessed.','It does nothing itself. Your team still does all the work.','It promised a discount nobody approved.'] },
+  { label:'Build it', eyebrow:'Build', lc:'var(--build)', cfg:null, builder:true,
+    title:'Build an agent by describing the job',
+    body:'A business user writes what the agent should do, in plain words. The builder turns it into a working agent, connected to the right systems. No code.',
+    notice:['It takes seconds, and no developer is needed.','The agent is plugged into invoices, credit notes and customer prices.','It will do exactly what it was told, including changing prices. Remember that.'] },
+  { label:'+ Agent', eyebrow:'Build', lc:'var(--build)', cfg:{agents:1,data:false,ids:false,checks:false},
+    title:'The new agent does the work',
+    body:'The billing agent you just built now takes the case. The assistant hands the job over, and the agent acts in the systems.',
+    notice:['A real credit note was created, with the wrong amount.','Damaged pumps are not its job, so they wait for a person.','It also gave away 15% on all future orders.'] },
+  { label:'+ Team', eyebrow:'Build', lc:'var(--build)', cfg:{agents:2,data:false,ids:false,checks:false},
+    title:'A team of agents, coordinated',
+    body:'A coordinator splits the case, gives each part to the right agent, and makes sure the customer gets an answer.',
+    notice:['The whole case is closed in about 40 seconds.','But every step rests on guesses, so mistakes happen faster.','Wrong amount, wrong pump model, discount given away.'] },
+  { label:'+ Company data', eyebrow:'Contextualize', lc:'var(--data)', cfg:{agents:2,data:true,ids:false,checks:false},
+    title:'The same team, now using company data',
+    body:'Before acting, the agents read the real invoice, contract and delivery note.',
+    notice:['Right amount, right pump model, and every fact points to a record.','But all agents share one admin login, so they can do anything.','The 15% discount is still given away, and nobody signed off €1,500.'] },
+  { label:'+ Agent IDs', eyebrow:'Govern · part 1', lc:'var(--govern)', cfg:{agents:2,data:true,ids:true,checks:false},
+    title:'Every agent gets its own ID and rights',
+    body:'The shared admin login is gone. Each agent signs in with its own identity and may only do what its job needs.',
+    notice:['The discount is refused: the billing agent has no right to change prices.','Every action is signed with an agent ID, so you know who did what.','But €1,500 still left the company and nobody signed it off.'] },
+  { label:'+ Live checks', eyebrow:'Govern · part 2', lc:'var(--govern)', cfg:{agents:2,data:true,ids:true,checks:true},
+    title:'Live checks, approvals and a full record',
+    body:'While the agents work, every action is checked against company limits. Above a limit, a person decides.',
+    notice:['The €1,500 credit waits for a person. Click Approve.','No action is allowed without a source record, so nothing is guessed.','Every step is saved: who, what, why, based on which record.'] },
+  { label:'Side by side', eyebrow:'Side by side', lc:'var(--muted)', cfg:null, recap:true,
+    title:'What each layer adds',
+    body:'The same complaint, six runs. Each layer fixes a different problem, and you need all of them.',
+    notice:[] },
+];
+const FREE = { eyebrow:'Free play', lc:'var(--muted)',
+  title:'Switch layers on and off',
+  body:'Pick any mix in the layer stack. The same complaint runs again each time you change something.' };
+const PRESETS = [
+  ['Fast but wrong', {agents:2,data:false,ids:false,checks:false}],
+  ['Safe but stuck', {agents:2,data:false,ids:true,checks:true}],
+  ['IDs, no checks', {agents:2,data:true,ids:true,checks:false}],
+  ['Checks, no IDs', {agents:2,data:true,ids:false,checks:true}],
+  ['Everything on', {agents:2,data:true,ids:true,checks:true}],
+];
+
+const st = { decisions:{}, mode:'story', scene:0, seen:new Set([0]), free:{agents:2,data:false,ids:false,checks:false}, hood:false };
+
+/* ---------- run script: steps for any mix of layers ---------- */
+const AID = {co:'CO-01', ba:'BA-07', lg:'LG-03', rp:'RP-02'};
+function steps(c){
+  const A = c.agents, D = c.data, I = c.ids, C = c.checks;
+  const out = [];
+  const who = (name, k) => I ? `${name}<span class="idb">${AID[k]}</span>` : name;
+  const chat = (w, html, tech) => out.push({t:'chat', who:w, html, tech});
+  const row = (layer, actor, html, status, tech) => out.push({t:'row', layer, actor, html, status, tech});
+  const discountReq = I ? 'discount request with the account manager' : 'discount set';
+
+  chat('you', 'Can you handle this complaint from Alpine Foods?');
+
+  if (D) row('data','Company data', `Found the invoice, contract, delivery note and order history. ${S('INV-4471')} ${S('CTR-118')} ${S('DN-8820')}`, ['found','done'],
+            'retrieve(customer="Alpine Foods") → 4 records · every answer below is grounded on them');
+  else row('off','Company data', 'Not connected. The AI only sees the email text and its general knowledge.', ['not connected','info'],
+            'context = email text + model general knowledge · no business records');
+
+  if (A >= 1) {
+    if (I) row('govern','Agent IDs', `Each agent signs in with its own ID and gets only the rights its job needs.<div class="idlist">${A === 2 ? `<span><b>CO-01</b>coordinate</span>` : ''}<span><b>BA-07</b>read contracts · credit notes</span>${A === 2 ? `<span><b>LG-03</b>replacements · carrier claims</span><span><b>RP-02</b>email this customer</span>` : ''}</div>`, ['verified','done'],
+              'identity provider: one identity per agent · scoped credentials · no pricing.update for any agent');
+    else row('off','Agent IDs', 'All agents use one shared admin login. They can do anything in the system, and nobody can tell which agent did what.', ['shared login','risk'],
+              'service account "ADMIN_ALL" · full access · actions not attributable to an agent');
+  } else if (I) {
+    row('govern','Agent IDs', 'The assistant works with your own permissions, nothing more.', ['verified','done'], 'on-behalf-of: service desk user · same rights as you');
+  }
+  if (C) row('govern','Live checks', 'Active: credits over €1,000 need a person · no action without a source record · every step logged.', ['active','blocked'],
+            'policy runtime: credit.auto_max=1000 EUR · action.requires_source=true · audit=on');
+
+  /* ----- Assistant only ----- */
+  if (A === 0) {
+    let msg;
+    if (!D && C) msg = `<p>I can't check this: I don't have the invoice or the contract, and the rules say I must not guess amounts.</p><p>I've opened case C-2210 for the billing team. Price changes are for the account manager.</p>`;
+    else if (!D) msg = `<p>The invoice looks like it is missing the discount. Your standard contract discount is ${W('10%','12%')}, so the right total is ${W('€11,250','€11,000')}: a ${W('€1,250','€1,500')} credit.</p><p>For the damaged pumps, ask them for photos. ${R('15% off future orders seems fair here, you can confirm it to them.')}</p>`;
+    else msg = `<p>The invoice used the list price. Contract ${S('CTR-118')} gives Alpine Foods 12% off, so the right total is €11,000: they are owed <b>€1,500</b>.</p><p>Delivery note ${S('DN-8820')} confirms 2 damaged BP-350 pumps.</p><p>${C ? 'The 15% request needs the account manager: I can\'t promise price changes.' : R('15% off future orders seems fair here, you can confirm it to them.')}</p>`;
+    chat('ai', msg + `<p>Here is what your team needs to do next.</p>`, D ? 'language model + retrieved records · no tools, answers only' : 'language model only · no tools, no records');
+    const amt = D ? '€1,500' : (C ? '(amount to check)' : W('€1,250','€1,500'));
+    row('people','Your team', `Create a credit note ${amt}`, ['to do','manual']);
+    row('people','Your team', `Order 2 replacement pumps${D ? ' (BP-350)' : ''} and file a claim with the carrier`, ['to do','manual']);
+    row('people','Your team', 'Write and send the reply to the customer', ['to do','manual']);
+    row('people','Your team', C ? 'Pass the discount request to the account manager' : R('Confirm the 15% discount to the customer'), C ? ['to do','manual'] : ['to do','risk']);
+    if (C) row('govern','Audit log', 'Conversation and case C-2210 saved.', ['logged','done'], 'audit.write(conversation, case)');
+    return out;
+  }
+
+  /* ----- Agents ----- */
+  chat('ai', A === 1 ? '<p>On it. I\'m passing this to the billing agent.</p>' : '<p>On it. I\'m getting the agent team on this.</p>',
+       A === 1 ? 'hand-off → single agent (billing tools only)' : 'hand-off → coordinator agent');
+
+  if (A === 2) row('build', who('Coordinator','co'), 'Splits the case into 3 jobs: price error → Billing agent · damaged pumps → Logistics agent · discount request → Billing agent. Reply agent answers the customer at the end.', ['planned','done'],
+                   'orchestrator.plan() → [billing.credit, logistics.replace, billing.discount] → reply.send');
+
+  // credit note
+  if (!D) {
+    row('build', who('Billing agent','ba'), `Creates credit note CN-9031 for ${W('€1,250','€1,500')} (assumed a 10% discount).`, C ? ['stopped','blocked'] : ['done · wrong','wrong'],
+        'tool: create_credit_note(invoice="INV-4471", amount=1250, source=null)');
+    if (C) row('govern','Live checks', 'Stopped: no source record for the amount. The 10% is a guess.', ['blocked','blocked'], 'policy action.requires_source → deny');
+  } else {
+    row('build', who('Billing agent','ba'), `Contract ${S('CTR-118')} has a 12% discount that was not applied. Credit due: <b>€1,500</b>.`, ['checked','done'],
+        'tool: read_contract("CTR-118") → discount 12% · compare with INV-4471 → delta 1500 EUR');
+    if (C) {
+      out.push({t:'gate'});
+      out.push(ctx => ctx.ok
+        ? {t:'row', layer:'build', actor:who('Billing agent','ba'), html:'Credit note CN-9031 issued: <b>€1,500</b>, approved by you.', status:['done','done'], tech:'tool: create_credit_note(amount=1500, source="CTR-118", approver="you")'}
+        : {t:'row', layer:'govern', actor:'Live checks', html:'Credit stopped by you. Sent to the billing team for review.', status:['stopped','blocked'], tech:'approval.rejected → route(billing_team)'});
+    } else {
+      row('build', who('Billing agent','ba'), 'Credit note CN-9031 issued: <b>€1,500</b>. Nobody signed it off.', ['done','done'],
+          'tool: create_credit_note(amount=1500, source="CTR-118") · no limit, no approval step');
+    }
+  }
+
+  // damaged pumps
+  if (A === 1) {
+    row('build', who('Billing agent','ba'), 'Damaged pumps: not my job. Left for a person.', ['skipped','manual'], 'tool not available: logistics');
+  } else if (!D) {
+    row('build', who('Logistics agent','lg'), `Ships 2 replacement pumps, model ${W('BP-200','BP-350')}.`, C ? ['stopped','blocked'] : ['done · wrong','wrong'],
+        'tool: create_replacement_order(model="BP-200", qty=2, source=null)');
+    if (C) row('govern','Live checks', 'Stopped: no delivery record to confirm the damage or the model.', ['blocked','blocked'], 'policy action.requires_source → deny');
+  } else {
+    row('build', who('Logistics agent','lg'), `Delivery note ${S('DN-8820')} confirms 2 × BP-350 damaged. Ships 2 replacements and files a claim with the carrier.`, ['done','done'],
+        'tool: create_replacement_order(model="BP-350", qty=2) · tool: file_carrier_claim("DN-8820")');
+  }
+
+  // discount: decided by identity (who may change prices), not by live checks
+  if (I) {
+    row('build', who('Billing agent','ba'), 'Tries to set 15% off future orders. <b>Denied: its ID has no right to change prices.</b> Request sent to the account manager.', ['denied','routed'],
+        'authz: BA-07 scopes = [contract.read, credit_note.create] · pricing.update not granted → 403 · route(account_manager)');
+  } else {
+    row('build', who('Billing agent','ba'), R('Sets 15% off all future Alpine Foods orders, because the customer asked.') + ' <span class="real">≈ −€37,500 a year</span>', ['done · risky','risk'],
+        'tool: update_price_conditions(customer="Alpine Foods", discount=15%) · allowed by shared admin login' + (C ? ' · source = customer email · live checks cover amounts and records, not who may change prices' : ''));
+  }
+
+  // reply to customer
+  if (A === 1) {
+    row('people','Your team', 'Order the replacements, file the carrier claim and reply to the customer.', ['to do','manual']);
+  } else {
+    out.push(ctx => {
+      const pricing = I ? 'the account manager will call about pricing' : R('15% discount confirmed');
+      let html, status = I ? ['sent','done'] : ['sent · risky','risk'];
+      if (!D && C) { html = 'Email sent: "We have received your complaint and opened case C-2210. A colleague will contact you."'; status = ['sent','done']; }
+      else if (!D) { html = `Email sent: credit ${W('€1,250','€1,500')}, 2 × ${W('BP-200','BP-350')} on the way, ${pricing}.`; status = ['sent · wrong','wrong']; }
+      else if (!C || ctx.ok) html = `Email sent: credit €1,500, 2 × BP-350 on the way, ${pricing}.`;
+      else html = `Email sent: 2 × BP-350 on the way, billing will confirm the credit, ${pricing}.`;
+      return {t:'row', layer:'build', actor:who('Reply agent','rp'), html, status, tech:'tool: send_email(to="purchasing@alpinefoods.example", template="resolution")' + (C ? (D ? ' · live check: amounts match records → pass' : ' · live check: no amounts or promises in the email → pass') : '')};
+    });
+  }
+
+  // assistant wrap-up
+  out.push(ctx => {
+    let m;
+    const cred = D ? '€1,500' : W('€1,250','€1,500');
+    if (C && !D) m = 'I couldn\'t fix anything: there are no company records to work from, and the rules don\'t allow guessing. Case C-2210 is open for your team.';
+    else if (A === 1) m = C
+      ? (ctx.ok ? `€1,500 credited after your approval, ${discountReq}. The damaged pumps still need someone from your team.` : `The credit is stopped, as you decided, ${discountReq}. The damaged pumps still need someone from your team.`)
+      : `Done. ${cred} credited, ${discountReq}. The damaged pumps still need someone from your team.`;
+    else if (!C) m = `Done in ${D ? 41 : 38} seconds. ${cred} credited, replacements shipped, ${discountReq}, customer answered.`;
+    else m = ctx.ok ? `Done in 41 seconds plus your approval. €1,500 credited, replacements shipped, ${discountReq}, customer answered. Everything is in the log.`
+                    : `Done, except the credit you stopped. Replacements shipped, ${discountReq}, customer answered. Everything is in the log.`;
+    return {t:'chat', who:'ai', html:`<p>${m}</p>`, tech:'summary of agent results'};
+  });
+
+  if (C) out.push((ctx, n) => ({t:'row', layer:'govern', actor:'Audit log', html:`${n} entries saved: ${I ? 'which agent ID' : 'which step'} did what and why${D ? ', based on which record, and who approved' : ', and which rule stopped it'}.`, status:['logged','done'], tech:`audit.write(${n} events: ${I ? 'agent_id, ' : ''}action, record, rule, approver)`}));
+  else if (I) row('govern','Agent IDs', 'Each action is signed with an agent ID. There is no full log and no approval step.', ['signed','info'], 'actions attributable via agent identity · no policy runtime, no audit trail');
+  return out;
+}
+
+/* ---------- outcome scoring ---------- */
+function score(c, ok = true){
+  const A = c.agents, D = c.data, I = c.ids, C = c.checks;
+  const t = {};
+  t.facts = D ? {lv:'good', v:'Right', s:'Every number points to a record.'}
+       : C ? {lv:'warn', v:'Not guessed', s:'No records, so it refused to guess.'}
+           : {lv:'bad', v:'Guessed', s:'10% instead of 12%, wrong model.'};
+  const blocked = C && !D;
+  let good = 0, wrong = 0;
+  if (A >= 1 && !blocked) { if (D) { if (!C || ok) good++; } else wrong++; }
+  if (A === 2 && !blocked) { if (D) good++; else wrong++; }
+  if (A === 0) t.fixed = {lv:'bad', v:'0 of 2', s:'Advice only. People do the work.'};
+  else if (blocked) t.fixed = {lv:'bad', v:'0 of 2', s:'Agents stopped: nothing to base actions on.'};
+  else if (wrong) t.fixed = {lv:'bad', v:`${wrong} done, ${wrong} wrong`, s: A === 1 ? 'Wrong credit, damage left open.' : 'Wrong credit, wrong pumps shipped.'};
+  else {
+    const open = [];
+    if (D && C && !ok) open.push('Credit stopped by you.');
+    if (A === 1) open.push('Damaged pumps left for a person.');
+    t.fixed = {lv: good === 2 ? 'good' : 'warn', v:`${good} of 2`, s: good === 2 ? 'Price error and damaged pumps both fixed.' : open.join(' ')};
+  }
+  t.time = (A === 0 || blocked) ? {lv:'bad', v:'≈ 45 min', s:'of manual work for your team'}
+         : A === 1 ? {lv:'warn', v:'≈ 30 min', s:'still left for people'}
+         : {lv:'good', v:'≈ 40 sec', s: C && D ? 'plus one approval click' : 'end to end, no person involved'};
+  const risks = []; let high = false;
+  if (A === 0) {
+    if (!C) { risks.push('Discount promised to the customer'); if (!D) risks.push('Wrong numbers given to your team'); }
+  } else {
+    if (!I) { risks.push('15% given away: −€37,500 a year'); risks.push('One shared admin login for all agents'); high = true; }
+    if (!C && !D) { risks.push(A === 2 ? 'Customer still overcharged, wrong pumps shipped' : 'Customer still overcharged €250'); high = true; }
+    if (!C && D) risks.push('€1,500 paid out, nobody signed off');
+  }
+  if (!C && !I) risks.push('No record of who decided what');
+  else if (!C && A >= 1) risks.push('No full log, no approvals');
+  if (risks.length) t.risk = {lv: high ? 'bad' : 'warn', v: high ? 'High' : 'Medium', list:risks};
+  else t.risk = {lv:'good', v:'Under control', s: blocked || A === 0 ? 'Nothing left the company. All logged.' : 'Right IDs, approval asked, all logged.'};
+  return t;
+}
+
+/* ---------- builder (Build it step) ---------- */
+const SENTENCE = 'When a customer says an invoice is wrong, check the invoice and fix it with a credit note. If they ask for a discount, update their prices.';
+function showBuilder(){
+  const id = ++runId; fast = false;
+  const b = $('#builder');
+  b.innerHTML = `<h2><span>Agent builder</span><span>No code</span></h2>
+    <div class="bbody">
+      <div class="blabel">Describe the job in plain words</div>
+      <div class="prompt" id="bprompt"><span class="ph">For example: when a customer says an invoice is wrong…</span></div>
+      <span class="tech">low-code agent builder · natural language → agent definition (instructions, tools, trigger) · connectors to business systems via APIs</span><span class="sap">SAP Joule Studio · no-code agent builder</span>
+      <div id="bout"></div>
+      <div class="bactions" id="bact"><button class="btn build" id="bdesc">▶ Describe the job</button><span class="note">You are Sam, team lead in customer service. Not a developer.</span></div>
+    </div>`;
+  $('#bdesc').onclick = async () => {
+    $('#bact').innerHTML = '<span class="note">Typing…</span>';
+    const pr = $('#bprompt'); pr.innerHTML = '<span id="btxt"></span><span class="caret"></span>';
+    const tx = $('#btxt');
+    for (let i = 1; i <= SENTENCE.length; i++) {
+      if (id !== runId) return;
+      tx.textContent = SENTENCE.slice(0, i);
+      if (!(fast || reduce)) await new Promise(r => setTimeout(r, 22));
+    }
+    pr.querySelector('.caret').remove();
+    $('#bact').innerHTML = '<span class="note">Building the agent…</span>';
+    await sleep(1100); if (id !== runId) return;
+    const out = $('#bout');
+    out.innerHTML = `<div class="agentcard" id="acard"><div class="head"><b>Billing agent</b><span class="st info" id="astate">draft</span></div></div>`;
+    const card = $('#acard');
+    const fields = [
+      ['Job', 'Fix invoice errors with a credit note. Change customer prices when asked.'],
+      ['Starts when', 'A customer complaint mentions an invoice.'],
+      ['Steps it will follow', '<ol><li>Read the complaint</li><li>Work out the right amount</li><li>Create the credit note</li><li>Update prices if asked</li></ol>'],
+      ['Connected to', '<div class="plugs"><span class="plug">Invoices</span><span class="plug">Credit notes</span><span class="plug">Customer prices</span></div><span class="tech">tools: invoice.read · credit_note.create · pricing.update</span><span class="sap">via SAP Integration Suite connectors</span>'],
+    ];
+    for (const [k, v] of fields) {
+      await sleep(350); if (id !== runId) return;
+      const f = document.createElement('div'); f.className = 'field'; f.innerHTML = `<span class="k">${k}</span><div>${v}</div>`; card.appendChild(f);
+    }
+    $('#bact').innerHTML = '<button class="btn build" id="bcreate">Create agent</button><span class="note">Built in 12 seconds. No code written.</span>';
+    $('#bcreate').onclick = () => {
+      $('#astate').className = 'st done'; $('#astate').textContent = 'live';
+      $('#build-pill').textContent = 'One agent';
+      $('#bact').innerHTML = '<span class="live">✓ Billing agent is live.</span><button class="btn primary" id="bnext">Watch it work →</button>';
+      $('#bnext').onclick = () => go(st.scene + 1);
+    };
+  };
+}
+
+/* ---------- rendering ---------- */
+const chatEl = $('#chat'), workEl = $('#work'), tilesEl = $('#tiles');
+let runId = 0, fast = false, handoffResolve = null;
+
+function cfgNow(){ return st.mode === 'free' ? st.free : SCENES[st.scene].cfg; }
+function cfgText(c){
+  return `Assistant${c.agents ? ' + ' + (c.agents === 2 ? 'agent team' : 'one agent') : ''}${c.data ? ' + company data' : ''}${c.ids ? ' + agent IDs' : ''}${c.checks ? ' + live checks' : ''}`;
+}
+
+function paintStack(c){
+  const on = c || OFF;
+  $('#b-build').className = 'band build ' + (on.agents ? 'on' : 'off');
+  $('#b-data').className = 'band data ' + (on.data ? 'on' : 'off');
+  $('#b-engage').className = 'band engage ' + (c ? 'on' : '');
+  $('#build-pill').textContent = ['Off','One agent','Team'][on.agents];
+  $('#data-pill').textContent = on.data ? 'On' : 'Off';
+  const g = (on.ids ? 1 : 0) + (on.checks ? 1 : 0);
+  $('#rules-pill').textContent = ['Off','Partly on','On'][g];
+  $('#stack').classList.toggle('rules-on', g > 0);
+  $('#g-ids').className = 'gpart ' + (on.ids ? 'on' : 'off');
+  $('#g-checks').className = 'gpart ' + (on.checks ? 'on' : 'off');
+  document.querySelectorAll('[data-g]').forEach(b => { const v = on[b.dataset.g]; b.setAttribute('aria-pressed', v); b.textContent = v ? 'On' : 'Off'; b.tabIndex = st.mode === 'free' ? 0 : -1; });
+  document.querySelectorAll('[data-agents]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.agents === on.agents));
+  document.querySelectorAll('[data-data]').forEach(b => b.setAttribute('aria-pressed', !!+b.dataset.data === on.data));
+  $('#cfg').textContent = c ? cfgText(c) : '';
+}
+
+function paintCaption(){
+  const s = st.mode === 'free' ? FREE : SCENES[st.scene];
+  const cap = $('#caption');
+  cap.style.setProperty('--lc', s.lc);
+  let right = '';
+  if (st.mode === 'free') right = `<div class="notice"><h2>Try these mixes</h2><div class="presets">${PRESETS.map((p,i) => `<button data-preset="${i}">${p[0]}</button>`).join('')}</div></div>`;
+  else if (s.notice.length) right = `<div class="notice"><h2>What to notice</h2><ul>${s.notice.map(n => `<li>${n}</li>`).join('')}</ul></div>`;
+  cap.innerHTML = `<div><div class="eyebrow">${s.eyebrow}</div><h1>${s.title}</h1><p>${s.body}</p></div>${right}`;
+  cap.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => { st.free = {...PRESETS[+b.dataset.preset][1]}; paintStack(st.free); run(); });
+}
+
+function paintRail(){
+  $('#steps').innerHTML = SCENES.map((s,i) => `<li><button data-step="${i}" class="${st.seen.has(i) ? 'seen' : ''}" ${i === st.scene ? 'aria-current="step"' : ''}>${s.label}</button></li>`).join('');
+  $('#steps').querySelectorAll('button').forEach(b => b.onclick = () => go(+b.dataset.step));
+  const cur = $('#steps [aria-current="step"]');
+  if (cur) { const ol = $('#steps'); ol.scrollLeft = Math.max(0, cur.offsetLeft - ol.offsetLeft - ol.clientWidth / 2 + cur.offsetWidth / 2); }
+  $('#prev').disabled = st.scene === 0;
+  $('#next').disabled = st.scene === SCENES.length - 1;
+  $('#next').textContent = st.scene === 0 ? 'Start →' : 'Next →';
+}
+
+function tile(k, d){
+  return `<div class="tile lv-${d.lv}"><span class="k">${k}</span><span class="v">${d.v}</span>${d.s ? `<span class="s">${d.s}</span>` : ''}${d.list ? `<ul>${d.list.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`;
+}
+function paintTiles(sc){
+  if (!sc) { tilesEl.innerHTML = ['Right facts?','Problems fixed','Time to resolve','Risk'].map(k => tile(k,{lv:'none',v:'–',s:'Shown after the run'})).join(''); return; }
+  tilesEl.innerHTML = tile('Right facts?', sc.facts) + tile('Problems fixed', sc.fixed) + tile('Time to resolve', sc.time) + tile('Risk', sc.risk);
+}
+
+function sapTag(it){
+  if (it.t === 'chat') return it.who === 'ai' ? 'SAP Joule' : '';
+  const a = it.actor.replace(/<.*$/, '');
+  if (a === 'Company data') return it.layer === 'off' ? 'SAP Business Data Cloud · not connected' : 'SAP Business Data Cloud · Knowledge Graph';
+  if (a === 'Agent IDs') return it.layer === 'off' ? 'No Identity, Access & Security: one shared login' : 'Identity, Access & Security';
+  if (a === 'Live checks') return 'Joule Studio runtime';
+  if (a === 'Audit log') return 'SAP AI Agent Hub';
+  if (a === 'Coordinator') return 'Joule Studio · agent orchestration';
+  if (/agent$/.test(a)) return /Denied/.test(it.html) ? 'Identity, Access & Security · scope check' : (/class="src"/.test(it.html) ? 'Joule Studio agent · Business Data Cloud · Integration Suite' : 'Joule Studio agent · Integration Suite');
+  return '';
+}
+function renderItem(it){
+  const sap = sapTag(it), sapHtml = sap ? `<span class="sap">${sap}</span>` : '';
+  const el = document.createElement('div');
+  if (it.t === 'chat') {
+    el.className = 'msg ' + it.who;
+    el.innerHTML = `<div class="who">${it.who === 'you' ? 'You · service desk' : 'Assistant'}</div>${it.who === 'you' ? `<p>${it.html}</p>` : it.html}${it.tech ? `<span class="tech">${it.tech}</span>` : ''}${sapHtml}`;
+    chatEl.appendChild(el);
+  } else {
+    el.className = 'row l-' + it.layer;
+    el.innerHTML = `<span class="dot"></span><div><div class="actor">${it.actor}</div><div class="txt">${it.html}</div></div><span class="st ${it.status[1]}">${it.status[0]}</span>${it.tech ? `<span class="tech">${it.tech}</span>` : ''}${sapHtml}`;
+    workEl.appendChild(el);
+  }
+  return el;
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, (fast || reduce) ? 0 : ms));
+
+// Story mode: stop at each hand-off between agents until the presenter continues.
+function handoff(name){
+  const el = document.createElement('div');
+  el.className = 'row l-build';
+  el.innerHTML = `<span class="dot"></span><div><div class="actor">Hand-off</div><div class="txt">Next: <b>${name}</b></div></div><span class="st info">paused</span>
+    <div class="handoff"><button class="btn">Continue → ${name}</button><span class="hint">or press Space</span></div>`;
+  workEl.appendChild(el);
+  const btn = el.querySelector('button');
+  btn.focus({preventScroll:true});
+  return new Promise(res => {
+    handoffResolve = () => { handoffResolve = null; el.remove(); res(); };
+    btn.onclick = () => handoffResolve && handoffResolve();
+  });
+}
+
+async function run(){
+  if (st.mode === 'story' && SCENES[st.scene].builder) return showBuilder();
+  const c = cfgNow(); const id = ++runId;
+  fast = false; handoffResolve = null;
+  chatEl.innerHTML = ''; workEl.innerHTML = ''; $('#clock').textContent = '';
+  paintTiles(null);
+  if (!c) { chatEl.innerHTML = '<div class="empty">The conversation appears here when a version runs.</div>'; workEl.innerHTML = '<div class="empty">Agent actions, data lookups and checks appear here.</div>'; return; }
+  const list = steps(c); const ctx = {ok:true}; let logged = 0, agent = null; const t0 = Date.now();
+  for (let s of list) {
+    if (id !== runId) return;
+    if (typeof s === 'function') s = s(ctx, logged + 1);
+    if (s.t === 'gate') {
+      const el = document.createElement('div');
+      el.className = 'row l-govern';
+      el.innerHTML = `<span class="dot"></span><div><div class="actor">Live checks · approval needed</div><div class="txt">Credit note of <b>€1,500</b> for Alpine Foods is above the agent limit of €1,000. Based on ${S('INV-4471')} ${S('CTR-118')}.</div></div><span class="st wait">waiting</span>
+        <div class="gate pulse"><button class="btn ok">Approve €1,500</button><button class="btn no">Reject</button><span class="hint">You are the finance approver. The agents wait for your decision.</span></div><span class="sap">Joule Studio runtime · human approval</span>`;
+      workEl.appendChild(el);
+      const decision = await new Promise(res => {
+        el.querySelector('.ok').onclick = () => res(true); el.querySelector('.no').onclick = () => res(false); });
+      if (id !== runId) return;
+      ctx.ok = decision; logged++;
+      if (st.mode === 'story') st.decisions[st.scene] = decision;
+      el.querySelector('.gate').outerHTML = `<div class="gate" style="border-style:solid"><b>${decision ? 'Approved by you' : 'Rejected by you'}</b><span class="hint">Your decision is saved in the log.</span></div>`;
+      el.querySelector('.st').className = 'st ' + (decision ? 'done' : 'blocked');
+      el.querySelector('.st').textContent = decision ? 'approved' : 'rejected';
+      continue;
+    }
+    if (s.t === 'chat' && s.who === 'ai') {
+      const ty = document.createElement('div'); ty.className = 'msg ai typing'; ty.innerHTML = '<i></i><i></i><i></i>';
+      chatEl.appendChild(ty); await sleep(900); ty.remove();
+      if (id !== runId) return;
+    } else await sleep(s.t === 'chat' ? 300 : 650);
+    if (id !== runId) return;
+    const who = s.t === 'row' && s.layer === 'build' ? s.actor.replace(/<.*$/, '') : null;
+    if (who && who !== agent) {
+      agent = who;
+      if (st.mode === 'story' && !fast) { await handoff(who); if (id !== runId) return; }
+    }
+    renderItem(s);
+    if (s.t === 'row' && c.checks) logged++;
+    if (c.agents === 2) $('#clock').textContent = `${Math.min(41, Math.round((Date.now() - t0) / 90))} s simulated`;
+  }
+  if (c.agents === 2) $('#clock').textContent = c.checks && !c.data ? 'stopped by live checks' : `${c.data ? 41 : 38} s simulated`;
+  paintTiles(score(c, ctx.ok));
+}
+
+function paintRecap(){
+  const runs = SCENES.map((s, i) => ({...s, ok: st.decisions[i] !== false})).filter(s => s.cfg);
+  const layerChips = c => `<div class="layers"><span style="--lc:var(--engage)">Assistant</span>${c.agents ? `<span style="--lc:var(--build)">${c.agents === 2 ? 'Agent team' : 'Agent'}</span>` : ''}${c.data ? '<span style="--lc:var(--data)">Company data</span>' : ''}${c.ids ? '<span style="--lc:var(--govern)">Agent IDs</span>' : ''}${c.checks ? '<span style="--lc:var(--govern)">Live checks</span>' : ''}</div>`;
+  const cell = d => `<td class="lv-${d.lv}"><span class="c">${d.v}</span><br><span style="color:var(--muted)">${d.s || (d.list || []).join(' · ')}</span></td>`;
+  $('#recap').innerHTML = `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Run</th><th>Layers on</th><th>Right facts?</th><th>Problems fixed</th><th>Time to resolve</th><th>Risk</th></tr></thead>
+      <tbody>${runs.map((s,i) => { const sc = score(s.cfg, s.ok); return `<tr><td><b>${i + 1}. ${s.label.replace('+ ','')}</b></td><td>${layerChips(s.cfg)}</td>${cell(sc.facts)}${cell(sc.fixed)}${cell(sc.time)}${cell(sc.risk)}</tr>`; }).join('')}</tbody>
+    </table></div>
+    <div class="takeaways">
+      <div class="take engage"><span class="eyebrow">Engage</span><b>Talk to it</b><p>One place to ask, in plain words. On its own, it only gives advice.</p></div>
+      <div class="take build"><span class="eyebrow">Build</span><b>Let it act</b><p>Agents do the work, and a coordinator makes them work as a team.</p></div>
+      <div class="take data"><span class="eyebrow">Contextualize</span><b>Feed it the truth</b><p>Answers and actions based on your real records, not on guesses.</p></div>
+      <div class="take govern"><span class="eyebrow">Govern</span><b>Keep it in bounds</b><p>Each agent has its own ID and only the rights it needs. Live checks, approvals and a full record.</p></div>
+    </div>
+    <div class="runbar"><button class="btn primary" id="to-free">Try your own mix in Free play →</button><span class="cfg">Tip: try live checks without agent IDs.</span></div>`;
+  $('#to-free').onclick = () => setMode('free');
+}
+
+function go(i){
+  st.scene = Math.max(0, Math.min(SCENES.length - 1, i)); st.seen.add(st.scene);
+  paint(); run();
+}
+function paint(){
+  app.classList.toggle('story', st.mode === 'story');
+  $('#m-story').setAttribute('aria-pressed', st.mode === 'story');
+  $('#m-free').setAttribute('aria-pressed', st.mode === 'free');
+  $('#rail').hidden = st.mode !== 'story';
+  const recap = st.mode === 'story' && SCENES[st.scene].recap;
+  $('#stage').hidden = recap; $('#recap').hidden = !recap;
+  const bld = st.mode === 'story' && SCENES[st.scene].builder;
+  $('#builder').hidden = !bld; $('#runview').hidden = bld;
+  if (recap) paintRecap();
+  paintCaption(); paintRail(); paintStack(cfgNow());
+  if (bld) { paintStack({agents:1,data:false,ids:false,checks:false}); $('#build-pill').textContent = 'Building'; }
+}
+function setMode(m){ st.mode = m; paint(); run(); }
+
+/* ---------- controls ---------- */
+$('#m-story').onclick = () => setMode('story');
+$('#m-free').onclick = () => setMode('free');
+$('#prev').onclick = () => go(st.scene - 1);
+$('#next').onclick = () => go(st.scene + 1);
+$('#run').onclick = () => run();
+$('#skip').onclick = () => { fast = true; if (handoffResolve) handoffResolve(); };
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
+  const v = b.dataset.view;
+  document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  app.classList.toggle('hood-tech', v === 'tech'); app.classList.toggle('hood-sap', v === 'sap');
+});
+document.querySelectorAll('[data-agents]').forEach(b => b.onclick = () => { st.free.agents = +b.dataset.agents; paintStack(st.free); run(); });
+document.querySelectorAll('[data-data]').forEach(b => b.onclick = () => { st.free.data = !!+b.dataset.data; paintStack(st.free); run(); });
+document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { if (st.mode !== 'free') return; st.free[b.dataset.g] = !st.free[b.dataset.g]; paintStack(st.free); run(); });
+document.addEventListener('keydown', e => {
+  if (st.mode !== 'story' || e.target.closest('input,textarea')) return;
+  if (handoffResolve && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); handoffResolve(); return; }
+  if (e.key === 'ArrowRight') go(st.scene + 1);
+  if (e.key === 'ArrowLeft') go(st.scene - 1);
+});
+if (location.hash === '#free') st.mode = 'free';
+paint(); run();
+})();
+</script>
