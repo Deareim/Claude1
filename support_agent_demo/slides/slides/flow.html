@@ -1,0 +1,42 @@
+<section id="flow" data-transition="fade" style="background:#f6f7fa;color:#16202c;font-family:'Figtree', Arial, sans-serif;padding:88px 128px 88px;display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:26px;font-weight:700;color:#2f5bd8;letter-spacing:3px;text-transform:uppercase">Application flow</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#16202c">From the customer's question to the answer</h2>
+</div>
+<div style="position:relative;width:1664px;height:60px">
+<p style="position:absolute;left:24px;top:0px;width:230px;font-size:26px;font-weight:700;text-align:center;background:#e9edf2;color:#2c3848;padding:10px 0;border-radius:30px">Customer</p>
+<p style="position:absolute;left:301px;top:0px;width:230px;font-size:26px;font-weight:700;text-align:center;background:#e9eefc;color:#1f45b0;padding:10px 0;border-radius:30px">App</p>
+<p style="position:absolute;left:578px;top:0px;width:230px;font-size:26px;font-weight:700;text-align:center;background:#f0eafc;color:#5a33b0;padding:10px 0;border-radius:30px">Agents</p>
+<p style="position:absolute;left:856px;top:0px;width:230px;font-size:26px;font-weight:700;text-align:center;background:#e1f5f1;color:#0b6b5d;padding:10px 0;border-radius:30px">Claude (AI)</p>
+<p style="position:absolute;left:1133px;top:0px;width:230px;font-size:26px;font-weight:700;text-align:center;background:#e5f1fb;color:#185f9c;padding:10px 0;border-radius:30px">Order database</p>
+<p style="position:absolute;left:1410px;top:0px;width:230px;font-size:26px;font-weight:700;text-align:center;background:#fdf0dc;color:#8a4a00;padding:10px 0;border-radius:30px">Manager</p>
+</div>
+<div style="position:relative;width:1664px;height:584px">
+<div style="position:absolute;left:138px;top:0px;width:2px;height:584px;background:#d3dae4"></div>
+<div style="position:absolute;left:415px;top:0px;width:2px;height:584px;background:#d3dae4"></div>
+<div style="position:absolute;left:692px;top:0px;width:2px;height:584px;background:#d3dae4"></div>
+<div style="position:absolute;left:970px;top:0px;width:2px;height:584px;background:#d3dae4"></div>
+<div style="position:absolute;left:1247px;top:0px;width:2px;height:584px;background:#d3dae4"></div>
+<div style="position:absolute;left:1524px;top:0px;width:2px;height:584px;background:#d3dae4"></div>
+<x-connector x1="139" y1="52" x2="416" y2="52" head="end" style="color:#47566a;border-width:3px"></x-connector>
+<p style="position:absolute;left:68px;top:12px;width:420px;font-size:24px;text-align:center;background:#f6f7fa">1 · Types the complaint</p>
+<x-connector x1="416" y1="116" x2="693" y2="116" head="end" style="color:#2f5bd8;border-width:3px"></x-connector>
+<p style="position:absolute;left:345px;top:76px;width:420px;font-size:24px;text-align:center;background:#f6f7fa">2 · Starts the agent team</p>
+<x-connector x1="693" y1="180" x2="971" y2="180" head="both" style="color:#7b4fd6;border-width:3px"></x-connector>
+<p style="position:absolute;left:612px;top:140px;width:440px;font-size:24px;text-align:center;background:#f6f7fa">3 · Triage: what is the problem?</p>
+<x-connector x1="693" y1="244" x2="1248" y2="244" head="both" style="color:#1f7ac7;border-width:3px"></x-connector>
+<p style="position:absolute;left:760px;top:204px;width:420px;font-size:24px;text-align:center;background:#f6f7fa">4 · Order: look up the order</p>
+<x-connector x1="693" y1="308" x2="139" y2="308" head="both" style="color:#1f7ac7;border-width:3px;border-style:dashed"></x-connector>
+<p style="position:absolute;left:186px;top:268px;width:460px;font-size:24px;text-align:center;background:#f6f7fa">5 · Loop: ask for the order number</p>
+<x-connector x1="693" y1="372" x2="971" y2="372" head="both" style="color:#0f8a78;border-width:3px"></x-connector>
+<p style="position:absolute;left:592px;top:332px;width:480px;font-size:24px;text-align:center;background:#f6f7fa">6 · Resolution: decide + draft reply</p>
+<x-connector x1="693" y1="436" x2="1525" y2="436" head="end" style="color:#0f8a78;border-width:3px"></x-connector>
+<p style="position:absolute;left:889px;top:396px;width:440px;font-size:24px;text-align:center;background:#f6f7fa">7 · Over €100? Ask the manager</p>
+<x-connector x1="1525" y1="500" x2="416" y2="500" head="end" style="color:#c26a00;border-width:3px"></x-connector>
+<p style="position:absolute;left:760px;top:460px;width:420px;font-size:24px;text-align:center;background:#f6f7fa">8 · Approve or reject</p>
+<x-connector x1="416" y1="564" x2="139" y2="564" head="end" style="color:#2f5bd8;border-width:3px"></x-connector>
+<p style="position:absolute;left:68px;top:524px;width:420px;font-size:24px;text-align:center;background:#f6f7fa">9 · Sends the answer</p>
+</div>
+<p style="font-size:24px;color:#5a6878">Dashed line = the loop (only when information is missing). In real use the whole trip takes seconds; the demo pauses at each hand-off.</p>
+<aside>Read it top to bottom: time flows down. The customer types a question into the app, the app starts the agent team, and the agents call out to two things: Claude for thinking, and the order database for facts. Step 5 is the loop: only when the order can't be found does the agent go back to the customer. Step 7 is the safety gate: above 100 euros the agents stop and a manager decides. Under 100 euros, steps 7 and 8 are skipped and the answer goes straight back. In the live demo, the right-hand column shows exactly these steps with real timings.</aside>
+</section>

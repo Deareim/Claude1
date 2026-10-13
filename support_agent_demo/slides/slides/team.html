@@ -1,0 +1,56 @@
+<section id="team" data-transition="fade" style="background:#ffffff;color:#16202c;font-family:'Figtree', Arial, sans-serif;padding:96px 128px 96px;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-size:26px;font-weight:700;color:#2f5bd8;letter-spacing:3px;text-transform:uppercase">Our example</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:64px;font-weight:700;line-height:1.1;color:#16202c">A support team of three agents and one person</h2>
+</div>
+<div style="display:flex;align-items:flex-start;gap:0">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-direction:column;gap:4px;background:#e9edf2;border:3px solid #47566a;border-radius:16px;padding:18px 20px">
+<p style="font-size:30px;font-weight:700;color:#16202c">Customer</p>
+<p style="font-size:24px;color:#3d4a5c">Writes the complaint</p>
+</div>
+<p style="font-size:24px;color:#5a6878">Starts the process</p>
+</div>
+<div style="padding-top:52px"><x-connector style="width:56px;color:#5a6878;border-width:3px"></x-connector></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-direction:column;gap:4px;background:#f0eafc;border:3px solid #7b4fd6;border-radius:16px;padding:18px 20px">
+<p style="font-size:30px;font-weight:700;color:#16202c">1 · Triage</p>
+<p style="font-size:24px;color:#3d4a5c">Understands the problem</p>
+</div>
+<p style="font-size:24px;color:#5a6878">Thinks with Claude</p>
+</div>
+<div style="padding-top:52px"><x-connector style="width:56px;color:#5a6878;border-width:3px"></x-connector></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-direction:column;gap:4px;background:#e5f1fb;border:3px solid #1f7ac7;border-radius:16px;padding:18px 20px">
+<p style="font-size:30px;font-weight:700;color:#16202c">2 · Order</p>
+<p style="font-size:24px;color:#3d4a5c">Finds the order</p>
+</div>
+<p style="font-size:24px;color:#5a6878">Uses the order database. Loops back to the customer if stuck</p>
+</div>
+<div style="padding-top:52px"><x-connector style="width:56px;color:#5a6878;border-width:3px"></x-connector></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-direction:column;gap:4px;background:#e1f5f1;border:3px solid #0f8a78;border-radius:16px;padding:18px 20px">
+<p style="font-size:30px;font-weight:700;color:#16202c">3 · Resolution</p>
+<p style="font-size:24px;color:#3d4a5c">Refund, replace or no</p>
+</div>
+<p style="font-size:24px;color:#5a6878">Claude + shop policy. Drafts the reply</p>
+</div>
+<div style="padding-top:52px"><x-connector style="width:56px;color:#5a6878;border-width:3px"></x-connector></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-direction:column;gap:4px;background:#fdf0dc;border:3px solid #c26a00;border-radius:16px;padding:18px 20px">
+<p style="font-size:30px;font-weight:700;color:#16202c">Manager</p>
+<p style="font-size:24px;color:#3d4a5c">Approves over €100</p>
+</div>
+<p style="font-size:24px;color:#5a6878">Fixed rule, not AI. Then the reply goes to the customer</p>
+</div>
+</div>
+<table style="font-family:'Figtree', Arial, sans-serif;font-size:28px;color:#16202c">
+<tr><th style="width:28%;text-align:left">Agentic idea</th><th style="width:72%;text-align:left">Where you see it in the demo</th></tr>
+<tr><td><b>Goal</b></td><td>Solve the customer's complaint, start to finish</td></tr>
+<tr><td><b>Hand-offs</b></td><td>Each agent passes its facts to the next one (the demo pauses here)</td></tr>
+<tr><td><b>Tools</b></td><td>The Order Agent searches the shop's order database</td></tr>
+<tr><td><b>Loop</b></td><td>No order found? The agent asks the customer, then searches again</td></tr>
+<tr><td><b>Human in the loop</b></td><td>Anything over €100 waits for a manager to approve or reject</td></tr>
+</table>
+<aside>Walk the diagram left to right. Each box is one small agent with one job, like a team of specialists. Triage reads the message and turns it into facts. The Order Agent uses a tool, the order database, and if it can't find the order it goes back and asks the customer: that's the loop. The Resolution Agent applies the shop policy and drafts the reply. Then a fixed safety rule, not the AI, decides whether a person must approve: anything over 100 euros goes to the manager. The table maps each agentic idea to what the audience will see in the live demo.</aside>
+</section>
