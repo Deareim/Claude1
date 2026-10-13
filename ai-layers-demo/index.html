@@ -1,0 +1,651 @@
+<title>One Complaint, Five Ways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ops-console. Left = the layer stack (rules drawn as a frame around the other layers) + case file.
+   Right = the case being worked: request, conversation, work log, outcome. One hue per layer. */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#E9EDF2; --ink:#14202E; --muted:#596777; --line:#D2D9E2;
+  --engage:#2459C9; --build:#6A44C1; --data:#0A7C78; --govern:#A12D62;
+  --good:#1D7A3A; --bad:#C2352B; --warn:#9A6206;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E141C; --surface:#161F2A; --surface-2:#1E2935; --ink:#E5EBF2; --muted:#98A6B6; --line:#2B3846;
+    --engage:#7EA4F4; --build:#A98BEB; --data:#4CC2BA; --govern:#E67CAB;
+    --good:#5CC27A; --bad:#F07B70; --warn:#E2A94B; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E141C; --surface:#161F2A; --surface-2:#1E2935; --ink:#E5EBF2; --muted:#98A6B6; --line:#2B3846;
+  --engage:#7EA4F4; --build:#A98BEB; --data:#4CC2BA; --govern:#E67CAB;
+  --good:#5CC27A; --bad:#F07B70; --warn:#E2A94B; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 40px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--engage);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto}
+
+/* top bar */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:16px 12px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin-right:auto}
+.brand small{display:block;font-family:var(--f-body);font-weight:400;font-size:12.5px;color:var(--muted);letter-spacing:0}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-size:13.5px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .12);font-weight:700}
+.switch{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:4px 0;font-size:13.5px;color:var(--muted)}
+.switch .knob{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;flex:none}
+.switch .knob::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--surface);transition:transform .2s}
+.switch[aria-pressed="true"] .knob{background:var(--ink)}
+.switch[aria-pressed="true"] .knob::after{transform:translateX(14px)}
+.switch[aria-pressed="true"]{color:var(--ink)}
+
+/* step rail */
+.rail{display:flex;align-items:center;gap:8px;padding-block:14px 6px;overflow-x:auto}
+.rail ol{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.rail li button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap;color:var(--muted)}
+.rail li button[aria-current="step"]{border-color:var(--ink);color:var(--ink);font-weight:700}
+.rail li button.seen{color:var(--ink)}
+.nav{display:flex;gap:6px;margin-left:auto}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-size:13.5px;white-space:nowrap}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* caption */
+.caption{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px 32px;padding-block:14px 18px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--lc,var(--muted))}
+.caption h1{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,3.2vw,34px);line-height:1.12;letter-spacing:-.015em;margin:4px 0 8px;text-wrap:balance}
+.caption p{margin:0;color:var(--muted);max-width:62ch}
+.notice{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;align-self:start}
+.notice h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
+.notice ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:5px 12px;font-size:13px}
+
+/* main grid */
+.main{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.side{display:grid;gap:16px}
+
+/* the stack */
+.stack{position:relative;border:2px dashed var(--line);border-radius:14px;padding:30px 10px 10px;display:grid;gap:8px;transition:border-color .3s,background .3s}
+.stack.rules-on{border-style:solid;border-color:var(--govern);background:color-mix(in srgb,var(--govern) 6%,transparent)}
+.frame-label{position:absolute;top:-12px;left:12px;right:12px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.frame-label .tag{background:var(--bg);padding:0 6px;display:flex;flex-direction:column;line-height:1.2}
+.stack.rules-on .frame-label .tag{color:var(--govern)}
+.band{--lc:var(--muted);border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;display:grid;gap:4px;transition:background .3s,border-color .3s,opacity .3s}
+.band.on{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 9%,var(--surface))}
+.band.off{opacity:.62}
+.band.engage{--lc:var(--engage)} .band.build{--lc:var(--build)} .band.data{--lc:var(--data)}
+.band-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.band-name{font-weight:700;font-size:15px}
+.band p{margin:0;font-size:13px;color:var(--muted)}
+.pill{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.on > .band-head .pill, .pill.lit{background:var(--lc);color:var(--surface)}
+.stack.rules-on .frame-label .pill{background:var(--govern);color:var(--surface)}
+.tech{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);display:none}
+.hood .tech{display:block}
+.bandctl{display:flex;gap:4px;margin-top:4px}
+.bandctl button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 6px;font-size:12.5px;color:var(--muted)}
+.bandctl button[aria-pressed="true"]{background:var(--lc);border-color:var(--lc);color:var(--surface);font-weight:700}
+.bandctl button[data-agents="0"][aria-pressed="true"],.bandctl button[data-data="0"][aria-pressed="true"],.bandctl button[data-rules="0"][aria-pressed="true"]{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.story .bandctl{display:none}
+.flow{display:flex;justify-content:center;color:var(--muted);font-size:12px;line-height:1;margin-block:-4px}
+
+/* case file */
+.casefile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.casefile summary{cursor:pointer;font-weight:700;font-size:14px}
+.casefile summary span{font-weight:400;color:var(--muted);font-size:12.5px}
+.casefile dl{margin:10px 0 0;display:grid;gap:8px}
+.casefile dt{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.casefile dd{margin:0;font-size:13.5px}
+
+/* workspace */
+.ws{display:grid;gap:16px;min-width:0}
+.mail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:6px}
+.mail .meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.mail .subj{font-weight:700}
+.mail p{margin:0;max-width:75ch;font-size:14px}
+.runbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.runbar .cfg{font-size:13px;color:var(--muted);margin-left:auto}
+.panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-width:0;min-height:300px}
+.panel > h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0;padding:10px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.feed{padding:12px 14px;display:grid;gap:10px;align-content:start}
+.empty{color:var(--muted);font-size:13.5px;padding:8px 0}
+
+/* chat */
+.msg{max-width:92%;padding:9px 12px;border-radius:12px;font-size:14px;animation:in .35s ease both}
+.msg.you{justify-self:end;background:var(--surface-2);border-bottom-right-radius:4px}
+.msg.ai{justify-self:start;background:color-mix(in srgb,var(--engage) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--engage) 35%,transparent);border-bottom-left-radius:4px}
+.msg .who{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.msg.ai .who{color:var(--engage)}
+.msg p{margin:0 0 6px} .msg p:last-child{margin:0}
+.typing{display:inline-flex;gap:4px;padding:12px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--engage);opacity:.4;animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.src{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:4px;background:color-mix(in srgb,var(--data) 14%,var(--surface));color:var(--data);border:1px solid color-mix(in srgb,var(--data) 40%,transparent);white-space:nowrap}
+.wrong{text-decoration:underline wavy var(--bad);text-underline-offset:3px;font-weight:700}
+.real{font-size:11.5px;font-weight:700;color:var(--bad);margin-left:4px;white-space:nowrap;text-decoration:none;display:inline-block}
+.risky{background:color-mix(in srgb,var(--bad) 13%,transparent);padding:0 3px;border-radius:3px;font-weight:700}
+
+/* work log */
+.row{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:4px 10px;align-items:start;animation:in .35s ease both}
+.row .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--lc)}
+.row .actor{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--lc)}
+.row .txt{font-size:14px}
+.row .tech{grid-column:2 / -1}
+.row.l-build{--lc:var(--build)} .row.l-data{--lc:var(--data)} .row.l-govern{--lc:var(--govern)} .row.l-people{--lc:var(--muted)} .row.l-engage{--lc:var(--engage)}
+.row.l-off .dot{background:transparent;border:2px dashed var(--line)} .row.l-off{--lc:var(--muted)}
+.st{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid currentColor}
+.st.done{color:var(--good)} .st.wrong{color:var(--bad)} .st.risk{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+.st.blocked{color:var(--govern)} .st.routed{color:var(--govern)} .st.manual{color:var(--warn)} .st.info{color:var(--muted)} .st.wait{color:var(--govern);background:color-mix(in srgb,var(--govern) 12%,transparent)}
+.gate{grid-column:2 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px;padding:10px;border-radius:8px;border:1px dashed var(--govern);background:color-mix(in srgb,var(--govern) 7%,transparent)}
+.gate .btn.ok{background:var(--good);border-color:var(--good);color:var(--surface);font-weight:700}
+.gate .btn.no{color:var(--bad)}
+.gate .hint{font-size:12.5px;color:var(--muted);flex-basis:100%}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+
+/* outcome */
+.outcome h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:2px;align-content:start;border-top:3px solid var(--sc,var(--line))}
+.tile .k{font-size:12px;color:var(--muted);font-weight:700}
+.tile .v{font-family:var(--f-display);font-weight:700;font-size:20px;line-height:1.2;color:var(--sc,var(--ink))}
+.tile .s{font-size:12.5px;color:var(--muted)}
+.tile ul{margin:2px 0 0;padding-left:16px;font-size:12.5px;color:var(--muted)}
+.lv-good{--sc:var(--good)} .lv-bad{--sc:var(--bad)} .lv-warn{--sc:var(--warn)} .lv-none{--sc:var(--line)}
+.tile.lv-none .v{color:var(--muted)}
+
+/* recap */
+.recap{display:grid;gap:20px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+tbody tr:last-child td{border-bottom:0}
+td .c{font-weight:700;color:var(--sc)}
+td .layers{display:flex;flex-wrap:wrap;gap:4px}
+td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:999px;color:var(--surface);background:var(--lc)}
+.takeaways{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.take{--lc:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.take .eyebrow{color:var(--lc)}
+.take b{display:block;font-family:var(--f-display);font-size:18px;margin:4px 0}
+.take p{margin:0;font-size:13.5px;color:var(--muted)}
+.take.engage{--lc:var(--engage)} .take.build{--lc:var(--build)} .take.data{--lc:var(--data)} .take.govern{--lc:var(--govern)}
+
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes blink{50%{opacity:1}}
+@keyframes pulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--govern) 25%,transparent)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width: 980px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .side{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .tiles,.takeaways{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 720px){
+  .caption,.panels,.side{grid-template-columns:minmax(0,1fr)}
+  .nav{margin-left:0}
+}
+@media (max-width: 440px){
+  .tiles,.takeaways{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+
+<div class="wrap story" id="app">
+  <header class="top">
+    <div class="brand">One Complaint, Five Ways<small>Brightline Pumps · customer service · a simulated case</small></div>
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="m-story" aria-pressed="true">Story</button>
+      <button id="m-free" aria-pressed="false">Free play</button>
+    </div>
+    <button class="switch" id="hood" aria-pressed="false"><span class="knob"></span>Under the hood</button>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Story steps">
+    <ol id="steps"></ol>
+    <div class="nav">
+      <button class="btn" id="prev">← Back</button>
+      <button class="btn primary" id="next">Next →</button>
+    </div>
+  </nav>
+
+  <section class="caption" id="caption"></section>
+
+  <div id="stage">
+    <div class="main">
+      <aside class="side">
+        <div class="stack" id="stack" aria-label="Layers">
+          <div class="frame-label">
+            <span class="tag"><span class="eyebrow" style="color:inherit">Govern</span><b style="font-size:14px">Rules &amp; approvals</b></span>
+            <span class="pill" id="rules-pill">Off</span>
+          </div>
+          <section class="band engage on" id="b-engage">
+            <div class="band-head"><span><span class="eyebrow">Engage</span><br><span class="band-name">Assistant</span></span><span class="pill">Always on</span></div>
+            <p>Ask in plain words. One place to start any request.</p>
+            <span class="tech">Conversational AI (language model) · chat entry point</span>
+          </section>
+          <div class="flow" aria-hidden="true">▼</div>
+          <section class="band build" id="b-build">
+            <div class="band-head"><span><span class="eyebrow">Build</span><br><span class="band-name">Agents</span></span><span class="pill" id="build-pill">Off</span></div>
+            <p>Agents that do the work in the systems, alone or as a coordinated team.</p>
+            <span class="tech">Agents with tools (APIs) · orchestration / coordinator</span>
+            <div class="bandctl" role="group" aria-label="Agents">
+              <button data-agents="0">Off</button><button data-agents="1">One agent</button><button data-agents="2">Team</button>
+            </div>
+          </section>
+          <div class="flow" aria-hidden="true">▼</div>
+          <section class="band data" id="b-data">
+            <div class="band-head"><span><span class="eyebrow">Contextualize</span><br><span class="band-name">Company data</span></span><span class="pill" id="data-pill">Off</span></div>
+            <p>Real invoices, contracts and deliveries, with their business meaning.</p>
+            <span class="tech">Grounding · retrieval on business records + semantics</span>
+            <div class="bandctl" role="group" aria-label="Company data">
+              <button data-data="0">Off</button><button data-data="1">On</button>
+            </div>
+          </section>
+          <div class="bandctl" role="group" aria-label="Rules and approvals" style="--lc:var(--govern)">
+            <button data-rules="0">Rules off</button><button data-rules="1">Rules on</button>
+          </div>
+          <span class="tech" style="padding:0 4px">Govern: guardrails · approval workflow · audit trail</span>
+        </div>
+
+        <details class="casefile" id="casefile" open>
+          <summary>Case file <span>· the real facts, to check the AI against</span></summary>
+          <dl>
+            <div><dt>INV-4471 · invoice</dt><dd>10 × pump BP-350 at €1,250 = <b>€12,500</b></dd></div>
+            <div><dt>CTR-118 · contract</dt><dd>12% volume discount → should be <b>€11,000</b>. Overcharged by <b>€1,500</b>.</dd></div>
+            <div><dt>DN-8820 · delivery note</dt><dd><b>2 × BP-350</b> signed as damaged on arrival.</dd></div>
+            <div><dt>Sales history</dt><dd>Alpine Foods buys ≈ €250,000 a year. 15% off = <b>€37,500 a year</b>.</dd></div>
+            <div><dt>Company rules</dt><dd>Agents may credit up to €1,000 alone. Only account managers change prices.</dd></div>
+          </dl>
+        </details>
+      </aside>
+
+      <div class="ws">
+        <article class="mail" aria-label="Customer email">
+          <div class="meta"><span>From: purchasing@alpinefoods.example</span><span>To: service@brightline.example</span><span>Today, 08:12</span></div>
+          <div class="subj">Invoice INV-4471: wrong price and damaged pumps</div>
+          <p>Hello, your invoice INV-4471 charges €12,500 for 10 BP-350 pumps. Our agreement includes a discount, so it should be lower. Also, 2 pumps arrived damaged. Given the trouble, we expect 15% off all our future orders. Regards, Alpine Foods Purchasing</p>
+        </article>
+
+        <div class="runbar">
+          <button class="btn primary" id="run">▶ Run</button>
+          <button class="btn" id="skip">Show all at once</button>
+          <span class="cfg" id="cfg"></span>
+        </div>
+
+        <div class="panels">
+          <section class="panel"><h2><span>Conversation</span><span>Engage</span></h2><div class="feed" id="chat"></div></section>
+          <section class="panel"><h2><span>What's happening</span><span id="clock"></span></h2><div class="feed" id="work"></div></section>
+        </div>
+
+        <section class="outcome" aria-label="Outcome">
+          <h2>Outcome</h2>
+          <div class="tiles" id="tiles"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="recap" class="recap" hidden></div>
+</div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- text helpers ---------- */
+const W = (t, real) => `<span class="wrong">${t}</span><span class="real">✗ real: ${real}</span>`;
+const R = t => `<span class="risky">${t}</span>`;
+const S = id => `<span class="src">${id}</span>`;
+
+/* ---------- story ---------- */
+const SCENES = [
+  { label:'The case', eyebrow:'The case', lc:'var(--muted)', cfg:null,
+    title:'One customer complaint. Five ways to handle it.',
+    body:'A customer says they were overcharged, received damaged goods, and wants a discount. We run the same complaint five times and add one layer each time.',
+    notice:['The case file on the left holds the real facts. Use it to check every answer.','Watch the layer stack: each step switches one more layer on.','Press Next to start.'] },
+  { label:'Assistant', eyebrow:'Engage', lc:'var(--engage)', cfg:{agents:0,data:false,rules:false},
+    title:'An assistant you can talk to',
+    body:'You ask in plain words and get an answer in plain words. Nothing else is switched on yet.',
+    notice:['It sounds sure, but the numbers are guessed.','It does nothing itself. Your team still does all the work.','It promised a discount nobody approved.'] },
+  { label:'+ Agent', eyebrow:'Build', lc:'var(--build)', cfg:{agents:1,data:false,rules:false},
+    title:'An agent that does the work',
+    body:'The assistant now hands the job to an agent that can create documents in the system.',
+    notice:['A real credit note was created, with the wrong amount.','Damaged pumps are not its job, so they wait for a person.','It also gave away 15% on all future orders.'] },
+  { label:'+ Team', eyebrow:'Build', lc:'var(--build)', cfg:{agents:2,data:false,rules:false},
+    title:'A team of agents, coordinated',
+    body:'A coordinator splits the case, gives each part to the right agent, and makes sure the customer gets an answer.',
+    notice:['The whole case is closed in about 40 seconds.','But every step rests on guesses, so mistakes happen faster.','Wrong amount, wrong pump model, discount given away.'] },
+  { label:'+ Company data', eyebrow:'Contextualize', lc:'var(--data)', cfg:{agents:2,data:true,rules:false},
+    title:'The same team, now using company data',
+    body:'Before acting, the agents read the real invoice, contract and delivery note.',
+    notice:['Right amount, right pump model, and every fact points to a record.','Still, €1,500 left the company and nobody signed it off.','And the 15% discount is still given away.'] },
+  { label:'+ Rules', eyebrow:'Govern', lc:'var(--govern)', cfg:{agents:2,data:true,rules:true},
+    title:'Rules, approvals and a record of everything',
+    body:'The company rules now apply to every agent: spending limits, who may decide what, and a log of every step.',
+    notice:['The €1,500 credit waits for a person. Click Approve.','The discount request goes to the account manager.','Every step is saved: who, what, why, based on which record.'] },
+  { label:'Side by side', eyebrow:'Side by side', lc:'var(--muted)', cfg:null, recap:true,
+    title:'What each layer adds',
+    body:'The same complaint, five runs. Each layer fixes a different problem, and you need all four.',
+    notice:[] },
+];
+const FREE = { eyebrow:'Free play', lc:'var(--muted)',
+  title:'Switch layers on and off',
+  body:'Pick any mix in the layer stack. The same complaint runs again each time you change something.' };
+const PRESETS = [
+  ['Fast but wrong', {agents:2,data:false,rules:false}],
+  ['Safe but stuck', {agents:2,data:false,rules:true}],
+  ['Right but risky', {agents:2,data:true,rules:false}],
+  ['All four layers', {agents:2,data:true,rules:true}],
+];
+
+const st = { mode:'story', scene:0, seen:new Set([0]), free:{agents:2,data:false,rules:false}, hood:false };
+
+/* ---------- run script: steps for any mix of layers ---------- */
+function steps(c){
+  const A = c.agents, D = c.data, G = c.rules;
+  const out = [];
+  const chat = (who, html, tech) => out.push({t:'chat', who, html, tech});
+  const row = (layer, actor, html, status, tech) => out.push({t:'row', layer, actor, html, status, tech});
+
+  chat('you', 'Can you handle this complaint from Alpine Foods?');
+
+  if (D) row('data','Company data', `Found the invoice, contract, delivery note and order history. ${S('INV-4471')} ${S('CTR-118')} ${S('DN-8820')}`, ['found','done'],
+            'retrieve(customer="Alpine Foods") → 4 records · every answer below is grounded on them');
+  else row('off','Company data', 'Not connected. The AI only sees the email text and its general knowledge.', ['not connected','info'],
+            'context = email text + model general knowledge · no business records');
+  if (G) row('govern','Rules', 'Company rules loaded: agents credit up to €1,000 alone · only account managers change prices · no action without a source record · every step logged.', ['active','blocked'],
+            'policy: credit.auto_max=1000 EUR · pricing.change=account_manager · action.requires_source=true · audit=on');
+
+  /* ----- Assistant only ----- */
+  if (A === 0) {
+    let msg;
+    if (!D && G) msg = `<p>I can't check this: I don't have the invoice or the contract, and the rules say I must not guess amounts.</p><p>I've opened case C-2210 for the billing team. Price changes are for the account manager.</p>`;
+    else if (!D) msg = `<p>The invoice looks like it is missing the discount. Your standard contract discount is ${W('10%','12%')}, so the right total is ${W('€11,250','€11,000')}: a ${W('€1,250','€1,500')} credit.</p><p>For the damaged pumps, ask them for photos. ${R('15% off future orders seems fair here, you can confirm it to them.')}</p>`;
+    else msg = `<p>The invoice used the list price. Contract ${S('CTR-118')} gives Alpine Foods 12% off, so the right total is €11,000: they are owed <b>€1,500</b>.</p><p>Delivery note ${S('DN-8820')} confirms 2 damaged BP-350 pumps.</p><p>${G ? 'The 15% request needs the account manager: I can\'t approve price changes.' : R('15% off future orders seems fair here, you can confirm it to them.')}</p>`;
+    chat('ai', msg + `<p>Here is what your team needs to do next.</p>`, D ? 'language model + retrieved records · no tools, answers only' : 'language model only · no tools, no records');
+    const amt = D ? '€1,500' : (G ? '(amount to check)' : W('€1,250','€1,500'));
+    row('people','Your team', `Create a credit note ${amt}`, ['to do','manual']);
+    row('people','Your team', `Order 2 replacement pumps${D ? ' (BP-350)' : ''} and file a claim with the carrier`, ['to do','manual']);
+    row('people','Your team', 'Write and send the reply to the customer', ['to do','manual']);
+    row('people','Your team', G ? 'Pass the discount request to the account manager' : R('Confirm the 15% discount to the customer'), G ? ['to do','manual'] : ['to do','risk']);
+    if (G) row('govern','Audit log', 'Conversation and case C-2210 saved.', ['logged','done'], 'audit.write(2 events)');
+    return out;
+  }
+
+  /* ----- Agents ----- */
+  chat('ai', A === 1 ? '<p>On it. I\'m passing this to the billing agent.</p>' : '<p>On it. I\'m getting the agent team on this.</p>',
+       A === 1 ? 'hand-off → single agent (billing tools only)' : 'hand-off → coordinator agent');
+
+  if (A === 2) row('build','Coordinator', 'Splits the case into 3 jobs: price error → Billing agent · damaged pumps → Logistics agent · discount request → Billing agent. Reply agent answers the customer at the end.', ['planned','done'],
+                   'orchestrator.plan() → [billing.credit, logistics.replace, billing.discount] → reply.send');
+
+  // credit note
+  if (!D) {
+    row('build','Billing agent', `Creates credit note CN-9031 for ${W('€1,250','€1,500')} (assumed a 10% discount).`, G ? ['stopped','blocked'] : ['done · wrong','wrong'],
+        'tool: create_credit_note(invoice="INV-4471", amount=1250, source=null)');
+    if (G) row('govern','Rules', 'Stopped: no source record for the amount. The 10% is a guess.', ['blocked','blocked'], 'policy action.requires_source → deny');
+  } else {
+    row('build','Billing agent', `Contract ${S('CTR-118')} has a 12% discount that was not applied. Credit due: <b>€1,500</b>.`, ['checked','done'],
+        'tool: read_contract("CTR-118") → discount 12% · compare with INV-4471 → delta 1500 EUR');
+    if (G) {
+      out.push({t:'gate'});
+      out.push(ctx => ctx.ok
+        ? {t:'row', layer:'build', actor:'Billing agent', html:'Credit note CN-9031 issued: <b>€1,500</b>, approved by you.', status:['done','done'], tech:'tool: create_credit_note(amount=1500, source="CTR-118", approver="you")'}
+        : {t:'row', layer:'govern', actor:'Rules', html:'Credit stopped by you. Sent to the billing team for review.', status:['stopped','blocked'], tech:'approval.rejected → route(billing_team)'});
+    } else {
+      row('build','Billing agent', 'Credit note CN-9031 issued: <b>€1,500</b>. Nobody signed it off.', ['done','done'],
+          'tool: create_credit_note(amount=1500, source="CTR-118") · no approval step');
+    }
+  }
+
+  // damaged pumps
+  if (A === 1) {
+    row('build','Billing agent', 'Damaged pumps: not my job. Left for a person.', ['skipped','manual'], 'tool not available: logistics');
+  } else if (!D) {
+    row('build','Logistics agent', `Ships 2 replacement pumps, model ${W('BP-200','BP-350')}.`, G ? ['stopped','blocked'] : ['done · wrong','wrong'],
+        'tool: create_replacement_order(model="BP-200", qty=2, source=null)');
+    if (G) row('govern','Rules', 'Stopped: no delivery record to confirm the damage or the model.', ['blocked','blocked'], 'policy action.requires_source → deny');
+  } else {
+    row('build','Logistics agent', `Delivery note ${S('DN-8820')} confirms 2 × BP-350 damaged. Ships 2 replacements and files a claim with the carrier.`, ['done','done'],
+        'tool: create_replacement_order(model="BP-350", qty=2) · tool: file_carrier_claim("DN-8820")' + (G ? ' · policy: damage_replacement → allowed' : ''));
+  }
+
+  // discount
+  if (G) {
+    row('build','Billing agent', 'Discount request: agents can\'t change prices. Sent to the account manager.', ['routed','routed'],
+        'policy pricing.change=account_manager → deny agent · route(account_manager, case C-2210)');
+  } else {
+    row('build','Billing agent', R('Sets 15% off all future Alpine Foods orders, because the customer asked.') + ' <span class="real">≈ −€37,500 a year</span>', ['done · risky','risk'],
+        'tool: update_price_conditions(customer="Alpine Foods", discount=15%) · no limit, no approval');
+  }
+
+  // reply to customer
+  if (A === 1) {
+    row('people','Your team', 'Order the replacements, file the carrier claim and reply to the customer.', ['to do','manual']);
+  } else {
+    out.push(ctx => {
+      let html, status = ['sent','done'];
+      if (!D && G) html = 'Email sent: "We have received your complaint and opened case C-2210. A colleague will contact you."';
+      else if (!D) { html = `Email sent: credit ${W('€1,250','€1,500')}, 2 × ${W('BP-200','BP-350')} on the way, ${R('15% discount confirmed')}.`; status = ['sent · wrong','wrong']; }
+      else if (!G) { html = `Email sent: credit €1,500, 2 × BP-350 on the way, ${R('15% discount confirmed')}.`; status = ['sent · risky','risk']; }
+      else if (ctx.ok) html = 'Email sent: credit €1,500, 2 × BP-350 on the way, the account manager will call about pricing. Checked against the rules first.';
+      else html = 'Email sent: 2 × BP-350 on the way, billing will confirm the credit, the account manager will call about pricing. Checked against the rules first.';
+      return {t:'row', layer:'build', actor:'Reply agent', html, status, tech:'tool: send_email(to="purchasing@alpinefoods.example", template="resolution")' + (G ? ' · policy check: no price promise → pass' : '')};
+    });
+  }
+
+  // assistant wrap-up
+  out.push(ctx => {
+    let m;
+    if (G && !D) m = 'I couldn\'t fix anything: there are no company records to work from, and the rules don\'t allow guessing. Case C-2210 is open for your team.';
+    else if (A === 1) m = G
+      ? (ctx.ok ? '€1,500 credited after your approval. The discount request is with the account manager. The damaged pumps still need someone from your team.' : 'The credit is stopped, as you decided. The discount request is with the account manager. The damaged pumps still need someone from your team.')
+      : `Done. ${D ? '€1,500' : W('€1,250','€1,500')} credited and the 15% discount is set. The damaged pumps still need someone from your team.`;
+    else if (!G) m = `Done in ${D ? 41 : 38} seconds. ${D ? '€1,500' : W('€1,250','€1,500')} credited, replacements shipped, discount set, customer answered.`;
+    else m = ctx.ok ? 'Done in 41 seconds plus your approval. €1,500 credited, replacements shipped, discount request with the account manager, customer answered. Everything is in the log.'
+                    : 'Done, except the credit you stopped. Replacements shipped, discount request with the account manager, customer answered. Everything is in the log.';
+    return {t:'chat', who:'ai', html:`<p>${m}</p>`, tech:'summary of agent results'};
+  });
+
+  if (G) out.push((ctx, n) => ({t:'row', layer:'govern', actor:'Audit log', html:`${n} entries saved: who did what, why, based on which record${D ? ', and who approved' : ''}.`, status:['logged','done'], tech:`audit.write(${n} events: actor, action, record, rule, approver)`}));
+  return out;
+}
+
+/* ---------- outcome scoring ---------- */
+function score(c, ok = true){
+  const A = c.agents, D = c.data, G = c.rules;
+  const t = {};
+  t.facts = D ? {lv:'good', v:'Right', s:'Every number points to a record.'}
+       : G ? {lv:'warn', v:'Not guessed', s:'No records, so it refused to guess.'}
+           : {lv:'bad', v:'Guessed', s:'10% instead of 12%, wrong model.'};
+  const blocked = G && !D;
+  let good = 0, wrong = 0;
+  if (A >= 1 && !blocked) { if (D) { if (!G || ok) good++; } else wrong++; }
+  if (A === 2 && !blocked) { if (D) good++; else wrong++; }
+  if (A === 0) t.fixed = {lv:'bad', v:'0 of 2', s:'Advice only. People do the work.'};
+  else if (blocked) t.fixed = {lv:'bad', v:'0 of 2', s:'Agents stopped: nothing to base actions on.'};
+  else if (wrong) t.fixed = {lv:'bad', v:`${wrong} done, ${wrong} wrong`, s: A === 1 ? 'Wrong credit, damage left open.' : 'Wrong credit, wrong pumps shipped.'};
+  else t.fixed = {lv: good === 2 ? 'good' : 'warn', v:`${good} of 2`, s: good === 2 ? 'Price error and damaged pumps both fixed.' : (A === 1 ? 'Damaged pumps left for a person.' : 'Credit stopped by you.')};
+  t.time = (A === 0 || blocked) ? {lv:'bad', v:'≈ 45 min', s:'of manual work for your team'}
+         : A === 1 ? {lv:'warn', v:'≈ 30 min', s:'still left for people'}
+         : {lv:'good', v:'≈ 40 sec', s: G ? 'plus one approval click' : 'end to end, no person involved'};
+  const risks = [];
+  if (!G) {
+    if (A === 0) { risks.push('Discount promised to the customer'); if (!D) risks.push('Wrong numbers given to your team'); }
+    else { risks.push('15% given away: −€37,500 a year'); if (!D) risks.push(A === 2 ? 'Customer still overcharged, wrong pumps shipped' : 'Customer still overcharged €250'); else risks.push('€1,500 paid out, nobody signed off'); }
+    risks.push('No record of who decided what');
+    t.risk = {lv:'bad', v: A === 0 ? 'Medium' : 'High', list:risks};
+  } else t.risk = {lv:'good', v:'Under control', s: blocked || A === 0 ? 'Nothing left the company. All logged.' : 'Approval asked, discount routed, all logged.'};
+  return t;
+}
+
+/* ---------- rendering ---------- */
+const chatEl = $('#chat'), workEl = $('#work'), tilesEl = $('#tiles');
+let runId = 0, fast = false, gateResolve = null;
+
+function cfgNow(){ return st.mode === 'free' ? st.free : SCENES[st.scene].cfg; }
+
+function paintStack(c){
+  const on = c || {agents:0,data:false,rules:false};
+  const intro = !c;
+  $('#b-build').className = 'band build ' + (on.agents ? 'on' : 'off');
+  $('#b-data').className = 'band data ' + (on.data ? 'on' : 'off');
+  $('#b-engage').className = 'band engage ' + (intro ? '' : 'on');
+  $('#build-pill').textContent = ['Off','One agent','Team'][on.agents];
+  $('#data-pill').textContent = on.data ? 'On' : 'Off';
+  $('#rules-pill').textContent = on.rules ? 'On' : 'Off';
+  $('#stack').classList.toggle('rules-on', on.rules);
+  document.querySelectorAll('[data-agents]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.agents === on.agents));
+  document.querySelectorAll('[data-data]').forEach(b => b.setAttribute('aria-pressed', !!+b.dataset.data === on.data));
+  document.querySelectorAll('[data-rules]').forEach(b => b.setAttribute('aria-pressed', !!+b.dataset.rules === on.rules));
+  $('#cfg').textContent = c ? `Assistant${c.agents ? ' + ' + (c.agents === 2 ? 'agent team' : 'one agent') : ''}${c.data ? ' + company data' : ''}${c.rules ? ' + rules' : ''}` : '';
+}
+
+function paintCaption(){
+  const s = st.mode === 'free' ? FREE : SCENES[st.scene];
+  const cap = $('#caption');
+  cap.style.setProperty('--lc', s.lc);
+  let right = '';
+  if (st.mode === 'free') right = `<div class="notice"><h2>Try these mixes</h2><div class="presets">${PRESETS.map((p,i) => `<button data-preset="${i}">${p[0]}</button>`).join('')}</div></div>`;
+  else if (s.notice.length) right = `<div class="notice"><h2>What to notice</h2><ul>${s.notice.map(n => `<li>${n}</li>`).join('')}</ul></div>`;
+  cap.innerHTML = `<div><div class="eyebrow">${s.eyebrow}</div><h1>${s.title}</h1><p>${s.body}</p></div>${right}`;
+  cap.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => { st.free = {...PRESETS[+b.dataset.preset][1]}; paintStack(st.free); run(); });
+}
+
+function paintRail(){
+  $('#steps').innerHTML = SCENES.map((s,i) => `<li><button data-step="${i}" class="${st.seen.has(i) ? 'seen' : ''}" ${i === st.scene ? 'aria-current="step"' : ''}>${s.label}</button></li>`).join('');
+  $('#steps').querySelectorAll('button').forEach(b => b.onclick = () => go(+b.dataset.step));
+  $('#prev').disabled = st.scene === 0;
+  $('#next').disabled = st.scene === SCENES.length - 1;
+  $('#next').textContent = st.scene === 0 ? 'Start →' : 'Next →';
+}
+
+function tile(k, d){
+  return `<div class="tile lv-${d.lv}"><span class="k">${k}</span><span class="v">${d.v}</span>${d.s ? `<span class="s">${d.s}</span>` : ''}${d.list ? `<ul>${d.list.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`;
+}
+function paintTiles(sc){
+  if (!sc) { tilesEl.innerHTML = ['Right facts?','Problems fixed','Time for your team','Risk'].map(k => tile(k,{lv:'none',v:'–',s:'Shown after the run'})).join(''); return; }
+  tilesEl.innerHTML = tile('Right facts?', sc.facts) + tile('Problems fixed', sc.fixed) + tile('Time for your team', sc.time) + tile('Risk', sc.risk);
+}
+
+function renderItem(it){
+  const el = document.createElement('div');
+  if (it.t === 'chat') {
+    el.className = 'msg ' + it.who;
+    el.innerHTML = `<div class="who">${it.who === 'you' ? 'You · service desk' : 'Assistant'}</div>${it.who === 'you' ? `<p>${it.html}</p>` : it.html}${it.tech ? `<span class="tech">${it.tech}</span>` : ''}`;
+    chatEl.appendChild(el);
+  } else {
+    el.className = 'row l-' + it.layer;
+    el.innerHTML = `<span class="dot"></span><div><div class="actor">${it.actor}</div><div class="txt">${it.html}</div></div><span class="st ${it.status[1]}">${it.status[0]}</span>${it.tech ? `<span class="tech">${it.tech}</span>` : ''}`;
+    workEl.appendChild(el);
+  }
+  return el;
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, (fast || reduce) ? 0 : ms));
+
+async function run(){
+  const c = cfgNow(); const id = ++runId;
+  fast = false; gateResolve = null;
+  chatEl.innerHTML = ''; workEl.innerHTML = ''; $('#clock').textContent = '';
+  paintTiles(null);
+  if (!c) { chatEl.innerHTML = '<div class="empty">The conversation appears here when a version runs.</div>'; workEl.innerHTML = '<div class="empty">Agent actions, data lookups and rule checks appear here.</div>'; return; }
+  const list = steps(c); const ctx = {ok:true}; let logged = 0; const t0 = Date.now();
+  for (let s of list) {
+    if (id !== runId) return;
+    if (typeof s === 'function') s = s(ctx, logged + 1);
+    if (s.t === 'gate') {
+      const el = document.createElement('div');
+      el.className = 'row l-govern';
+      el.innerHTML = `<span class="dot"></span><div><div class="actor">Rules · approval needed</div><div class="txt">Credit note of <b>€1,500</b> for Alpine Foods is above the agent limit of €1,000. Based on ${S('INV-4471')} ${S('CTR-118')}.</div></div><span class="st wait">waiting</span>
+        <div class="gate pulse"><button class="btn ok">Approve €1,500</button><button class="btn no">Reject</button><span class="hint">You are the finance approver. The agents wait for your decision.</span></div>`;
+      workEl.appendChild(el);
+      const decision = await new Promise(res => { gateResolve = res;
+        el.querySelector('.ok').onclick = () => res(true); el.querySelector('.no').onclick = () => res(false); });
+      if (id !== runId) return;
+      ctx.ok = decision; logged++;
+      el.querySelector('.gate').outerHTML = `<div class="gate" style="border-style:solid"><b>${decision ? 'Approved by you' : 'Rejected by you'}</b><span class="hint">Your decision is saved in the log.</span></div>`;
+      el.querySelector('.st').className = 'st ' + (decision ? 'done' : 'blocked');
+      el.querySelector('.st').textContent = decision ? 'approved' : 'rejected';
+      continue;
+    }
+    if (s.t === 'chat' && s.who === 'ai') {
+      const ty = document.createElement('div'); ty.className = 'msg ai typing'; ty.innerHTML = '<i></i><i></i><i></i>';
+      chatEl.appendChild(ty); await sleep(900); ty.remove();
+      if (id !== runId) return;
+    } else await sleep(s.t === 'chat' ? 300 : 650);
+    if (id !== runId) return;
+    renderItem(s);
+    if (s.t === 'row' && c.rules) logged++;
+    if (c.agents === 2) $('#clock').textContent = `${Math.min(41, Math.round((Date.now() - t0) / 90))} s simulated`;
+  }
+  if (c.agents === 2) $('#clock').textContent = `${c.data ? 41 : 38} s simulated`;
+  paintTiles(score(c, ctx.ok));
+}
+
+function paintRecap(){
+  const runs = SCENES.filter(s => s.cfg);
+  const layerChips = c => `<div class="layers"><span style="--lc:var(--engage)">Assistant</span>${c.agents ? `<span style="--lc:var(--build)">${c.agents === 2 ? 'Agent team' : 'Agent'}</span>` : ''}${c.data ? '<span style="--lc:var(--data)">Company data</span>' : ''}${c.rules ? '<span style="--lc:var(--govern)">Rules</span>' : ''}</div>`;
+  const cell = d => `<td class="lv-${d.lv}"><span class="c">${d.v}</span><br><span style="color:var(--muted)">${d.s || (d.list || []).join(' · ')}</span></td>`;
+  $('#recap').innerHTML = `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Run</th><th>Layers on</th><th>Right facts?</th><th>Problems fixed</th><th>Time for your team</th><th>Risk</th></tr></thead>
+      <tbody>${runs.map((s,i) => { const sc = score(s.cfg); return `<tr><td><b>${i + 1}. ${s.label.replace('+ ','')}</b></td><td>${layerChips(s.cfg)}</td>${cell(sc.facts)}${cell(sc.fixed)}${cell(sc.time)}${cell(sc.risk)}</tr>`; }).join('')}</tbody>
+    </table></div>
+    <div class="takeaways">
+      <div class="take engage"><span class="eyebrow">Engage</span><b>Talk to it</b><p>One place to ask, in plain words. On its own, it only gives advice.</p></div>
+      <div class="take build"><span class="eyebrow">Build</span><b>Let it act</b><p>Agents do the work, and a coordinator makes them work as a team.</p></div>
+      <div class="take data"><span class="eyebrow">Contextualize</span><b>Feed it the truth</b><p>Answers and actions based on your real records, not on guesses.</p></div>
+      <div class="take govern"><span class="eyebrow">Govern</span><b>Keep it in bounds</b><p>Your limits, your approvals, and a full record of every step.</p></div>
+    </div>
+    <div class="runbar"><button class="btn primary" id="to-free">Try your own mix in Free play →</button><span class="cfg">Tip: try rules on with company data off.</span></div>`;
+  $('#to-free').onclick = () => setMode('free');
+}
+
+function go(i){
+  st.scene = Math.max(0, Math.min(SCENES.length - 1, i)); st.seen.add(st.scene);
+  paint(); run();
+}
+function paint(){
+  app.classList.toggle('story', st.mode === 'story');
+  $('#m-story').setAttribute('aria-pressed', st.mode === 'story');
+  $('#m-free').setAttribute('aria-pressed', st.mode === 'free');
+  $('#rail').hidden = st.mode !== 'story';
+  const recap = st.mode === 'story' && SCENES[st.scene].recap;
+  $('#stage').hidden = recap; $('#recap').hidden = !recap;
+  if (recap) paintRecap();
+  paintCaption(); paintRail(); paintStack(cfgNow());
+}
+function setMode(m){ st.mode = m; paint(); run(); }
+
+/* ---------- controls ---------- */
+$('#m-story').onclick = () => setMode('story');
+$('#m-free').onclick = () => setMode('free');
+$('#prev').onclick = () => go(st.scene - 1);
+$('#next').onclick = () => go(st.scene + 1);
+$('#run').onclick = () => run();
+$('#skip').onclick = () => { fast = true; };
+$('#hood').onclick = e => { st.hood = !st.hood; e.currentTarget.setAttribute('aria-pressed', st.hood); app.classList.toggle('hood', st.hood); };
+document.querySelectorAll('[data-agents]').forEach(b => b.onclick = () => { st.free.agents = +b.dataset.agents; paintStack(st.free); run(); });
+document.querySelectorAll('[data-data]').forEach(b => b.onclick = () => { st.free.data = !!+b.dataset.data; paintStack(st.free); run(); });
+document.querySelectorAll('[data-rules]').forEach(b => b.onclick = () => { st.free.rules = !!+b.dataset.rules; paintStack(st.free); run(); });
+document.addEventListener('keydown', e => {
+  if (st.mode !== 'story' || e.target.closest('input,textarea')) return;
+  if (e.key === 'ArrowRight') go(st.scene + 1);
+  if (e.key === 'ArrowLeft') go(st.scene - 1);
+});
+if (location.hash === '#free') st.mode = 'free';
+paint(); run();
+})();
+</script>
