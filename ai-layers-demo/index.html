@@ -108,6 +108,29 @@ button{font:inherit;color:inherit;cursor:pointer}
 .idlist{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .idlist span{font-size:12px;padding:1px 7px;border-radius:4px;background:var(--surface-2)}
 .idlist b{font-family:var(--f-mono);font-size:11px;color:var(--govern);margin-right:4px}
+.runview{display:grid;gap:16px;min-width:0}
+.builder{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.builder > h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0;padding:10px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.bbody{padding:16px;display:grid;gap:14px}
+.bbody > .tech{margin-top:-6px}
+.blabel{font-size:13px;font-weight:700}
+.prompt{border:1.5px solid var(--build);border-radius:10px;padding:12px 14px;min-height:80px;font-size:17px;line-height:1.45;background:color-mix(in srgb,var(--build) 5%,var(--surface))}
+.prompt .ph{color:var(--muted)}
+.caret{display:inline-block;width:2px;height:1.05em;margin-left:1px;background:var(--build);vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
+.bactions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bactions .note{font-size:13px;color:var(--muted)}
+.btn.build{background:var(--build);border-color:var(--build);color:var(--surface);font-weight:700}
+.agentcard{border:1px solid var(--build);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;background:color-mix(in srgb,var(--build) 4%,var(--surface))}
+.agentcard .head{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.agentcard .head b{font-family:var(--f-display);font-size:20px}
+.field{display:grid;gap:4px;align-content:start;animation:in .35s ease both}
+.field .k{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.field ol{margin:0;padding-left:18px;display:grid;gap:2px}
+.plugs{display:flex;flex-wrap:wrap;gap:6px}
+.plug{display:inline-flex;gap:6px;align-items:center;font-size:13px;padding:3px 10px;border-radius:999px;border:1px solid var(--build);color:var(--build);background:var(--surface)}
+.plug::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--build)}
+.live{font-size:14px;color:var(--good);font-weight:700}
+@media (max-width: 720px){.agentcard{grid-template-columns:minmax(0,1fr)}}
 .story .bandctl{display:none}
 .flow{display:flex;justify-content:center;color:var(--muted);font-size:12px;line-height:1;margin-block:-4px}
 
@@ -282,6 +305,8 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
       </aside>
 
       <div class="ws">
+        <section class="builder" id="builder" hidden aria-label="Agent builder"></section>
+        <div class="runview" id="runview">
         <article class="mail" aria-label="Customer email">
           <div class="meta"><span>From: purchasing@alpinefoods.example</span><span>To: service@brightline.example</span><span>Today, 08:12</span></div>
           <div class="subj">Invoice INV-4471: wrong price and damaged pumps</div>
@@ -303,6 +328,7 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
           <h2>Outcome</h2>
           <div class="tiles" id="tiles"></div>
         </section>
+        </div>
       </div>
     </div>
   </div>
@@ -332,9 +358,13 @@ const SCENES = [
     title:'An assistant you can talk to',
     body:'You ask in plain words and get an answer in plain words. Nothing else is switched on yet.',
     notice:['It sounds sure, but the numbers are guessed.','It does nothing itself. Your team still does all the work.','It promised a discount nobody approved.'] },
+  { label:'Build it', eyebrow:'Build', lc:'var(--build)', cfg:null, builder:true,
+    title:'Build an agent by describing the job',
+    body:'A business user writes what the agent should do, in plain words. The builder turns it into a working agent, connected to the right systems. No code.',
+    notice:['It takes seconds, and no developer is needed.','The agent is plugged into invoices, credit notes and customer prices.','It will do exactly what it was told, including changing prices. Remember that.'] },
   { label:'+ Agent', eyebrow:'Build', lc:'var(--build)', cfg:{agents:1,data:false,ids:false,checks:false},
-    title:'An agent that does the work',
-    body:'The assistant now hands the job to an agent that can create documents in the system.',
+    title:'The new agent does the work',
+    body:'The billing agent you just built now takes the case. The assistant hands the job over, and the agent acts in the systems.',
     notice:['A real credit note was created, with the wrong amount.','Damaged pumps are not its job, so they wait for a person.','It also gave away 15% on all future orders.'] },
   { label:'+ Team', eyebrow:'Build', lc:'var(--build)', cfg:{agents:2,data:false,ids:false,checks:false},
     title:'A team of agents, coordinated',
@@ -528,6 +558,54 @@ function score(c, ok = true){
   return t;
 }
 
+/* ---------- builder (Build it step) ---------- */
+const SENTENCE = 'When a customer says an invoice is wrong, check the invoice and fix it with a credit note. If they ask for a discount, update their prices.';
+function showBuilder(){
+  const id = ++runId; fast = false;
+  const b = $('#builder');
+  b.innerHTML = `<h2><span>Agent builder</span><span>No code</span></h2>
+    <div class="bbody">
+      <div class="blabel">Describe the job in plain words</div>
+      <div class="prompt" id="bprompt"><span class="ph">For example: when a customer says an invoice is wrong…</span></div>
+      <span class="tech">low-code agent builder · natural language → agent definition (instructions, tools, trigger) · connectors to business systems via APIs</span>
+      <div id="bout"></div>
+      <div class="bactions" id="bact"><button class="btn build" id="bdesc">▶ Describe the job</button><span class="note">You are Sam, team lead in customer service. Not a developer.</span></div>
+    </div>`;
+  $('#bdesc').onclick = async () => {
+    $('#bact').innerHTML = '<span class="note">Typing…</span>';
+    const pr = $('#bprompt'); pr.innerHTML = '<span id="btxt"></span><span class="caret"></span>';
+    const tx = $('#btxt');
+    for (let i = 1; i <= SENTENCE.length; i++) {
+      if (id !== runId) return;
+      tx.textContent = SENTENCE.slice(0, i);
+      if (!(fast || reduce)) await new Promise(r => setTimeout(r, 22));
+    }
+    pr.querySelector('.caret').remove();
+    $('#bact').innerHTML = '<span class="note">Building the agent…</span>';
+    await sleep(1100); if (id !== runId) return;
+    const out = $('#bout');
+    out.innerHTML = `<div class="agentcard" id="acard"><div class="head"><b>Billing agent</b><span class="st info" id="astate">draft</span></div></div>`;
+    const card = $('#acard');
+    const fields = [
+      ['Job', 'Fix invoice errors with a credit note. Change customer prices when asked.'],
+      ['Starts when', 'A customer complaint mentions an invoice.'],
+      ['Steps it will follow', '<ol><li>Read the complaint</li><li>Work out the right amount</li><li>Create the credit note</li><li>Update prices if asked</li></ol>'],
+      ['Connected to', '<div class="plugs"><span class="plug">Invoices</span><span class="plug">Credit notes</span><span class="plug">Customer prices</span></div><span class="tech">tools: invoice.read · credit_note.create · pricing.update</span>'],
+    ];
+    for (const [k, v] of fields) {
+      await sleep(350); if (id !== runId) return;
+      const f = document.createElement('div'); f.className = 'field'; f.innerHTML = `<span class="k">${k}</span><div>${v}</div>`; card.appendChild(f);
+    }
+    $('#bact').innerHTML = '<button class="btn build" id="bcreate">Create agent</button><span class="note">Built in 12 seconds. No code written.</span>';
+    $('#bcreate').onclick = () => {
+      $('#astate').className = 'st done'; $('#astate').textContent = 'live';
+      $('#build-pill').textContent = 'One agent';
+      $('#bact').innerHTML = '<span class="live">✓ Billing agent is live.</span><button class="btn primary" id="bnext">Watch it work →</button>';
+      $('#bnext').onclick = () => go(st.scene + 1);
+    };
+  };
+}
+
 /* ---------- rendering ---------- */
 const chatEl = $('#chat'), workEl = $('#work'), tilesEl = $('#tiles');
 let runId = 0, fast = false;
@@ -599,6 +677,7 @@ function renderItem(it){
 const sleep = ms => new Promise(r => setTimeout(r, (fast || reduce) ? 0 : ms));
 
 async function run(){
+  if (st.mode === 'story' && SCENES[st.scene].builder) return showBuilder();
   const c = cfgNow(); const id = ++runId;
   fast = false;
   chatEl.innerHTML = ''; workEl.innerHTML = ''; $('#clock').textContent = '';
@@ -667,8 +746,11 @@ function paint(){
   $('#rail').hidden = st.mode !== 'story';
   const recap = st.mode === 'story' && SCENES[st.scene].recap;
   $('#stage').hidden = recap; $('#recap').hidden = !recap;
+  const bld = st.mode === 'story' && SCENES[st.scene].builder;
+  $('#builder').hidden = !bld; $('#runview').hidden = bld;
   if (recap) paintRecap();
   paintCaption(); paintRail(); paintStack(cfgNow());
+  if (bld) { paintStack({agents:1,data:false,ids:false,checks:false}); $('#build-pill').textContent = 'Building'; }
 }
 function setMode(m){ st.mode = m; paint(); run(); }
 
