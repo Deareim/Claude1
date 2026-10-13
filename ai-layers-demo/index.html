@@ -1,4 +1,4 @@
-<title>One Complaint, Five Ways</title>
+<title>One Complaint, Six Ways</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -94,7 +94,20 @@ button{font:inherit;color:inherit;cursor:pointer}
 .bandctl{display:flex;gap:4px;margin-top:4px}
 .bandctl button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 6px;font-size:12.5px;color:var(--muted)}
 .bandctl button[aria-pressed="true"]{background:var(--lc);border-color:var(--lc);color:var(--surface);font-weight:700}
-.bandctl button[data-agents="0"][aria-pressed="true"],.bandctl button[data-data="0"][aria-pressed="true"],.bandctl button[data-rules="0"][aria-pressed="true"]{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.bandctl button[data-agents="0"][aria-pressed="true"],.bandctl button[data-data="0"][aria-pressed="true"]{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.gparts{display:grid;gap:6px;margin-top:2px}
+.gpart{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;border:1px dashed var(--line);background:var(--surface);font-size:13.5px;transition:background .3s,border-color .3s}
+.gpart > div{display:grid;gap:2px;min-width:0}
+.gpart .sub{font-size:12.5px;color:var(--muted)}
+.gpart.on{border:1px solid var(--govern);background:color-mix(in srgb,var(--govern) 9%,var(--surface))}
+.gpart.off{opacity:.7}
+.gtog{flex:none;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.gtog[aria-pressed="true"]{background:var(--govern);border-color:var(--govern);color:var(--surface)}
+.story .gtog{cursor:default;pointer-events:none}
+.idb{font-family:var(--f-mono);font-size:10.5px;font-weight:500;letter-spacing:0;text-transform:none;padding:0 5px;margin-left:6px;border-radius:4px;border:1px solid currentColor;color:var(--govern)}
+.idlist{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.idlist span{font-size:12px;padding:1px 7px;border-radius:4px;background:var(--surface-2)}
+.idlist b{font-family:var(--f-mono);font-size:11px;color:var(--govern);margin-right:4px}
 .story .bandctl{display:none}
 .flow{display:flex;justify-content:center;color:var(--muted);font-size:12px;line-height:1;margin-block:-4px}
 
@@ -201,7 +214,7 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
 
 <div class="wrap story" id="app">
   <header class="top">
-    <div class="brand">One Complaint, Five Ways<small>Brightline Pumps · customer service · a simulated case</small></div>
+    <div class="brand">One Complaint, Six Ways<small>Brightline Pumps · customer service · a simulated case</small></div>
     <div class="seg" role="group" aria-label="Mode">
       <button id="m-story" aria-pressed="true">Story</button>
       <button id="m-free" aria-pressed="false">Free play</button>
@@ -224,7 +237,7 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
       <aside class="side">
         <div class="stack" id="stack" aria-label="Layers">
           <div class="frame-label">
-            <span class="tag"><span class="eyebrow" style="color:inherit">Govern</span><b style="font-size:14px">Rules &amp; approvals</b></span>
+            <span class="tag"><span class="eyebrow" style="color:inherit">Govern</span><b style="font-size:14px">Control &amp; trust</b></span>
             <span class="pill" id="rules-pill">Off</span>
           </div>
           <section class="band engage on" id="b-engage">
@@ -250,10 +263,10 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
               <button data-data="0">Off</button><button data-data="1">On</button>
             </div>
           </section>
-          <div class="bandctl" role="group" aria-label="Rules and approvals" style="--lc:var(--govern)">
-            <button data-rules="0">Rules off</button><button data-rules="1">Rules on</button>
+          <div class="gparts" role="group" aria-label="Govern parts">
+            <div class="gpart" id="g-ids"><div><b>Agent IDs &amp; access</b><span class="sub">Each agent has its own ID and only the rights its job needs.</span><span class="tech">identity provider · per-agent credentials · least-privilege scopes</span></div><button class="gtog" data-g="ids" aria-pressed="false">Off</button></div>
+            <div class="gpart" id="g-checks"><div><b>Live checks &amp; approvals</b><span class="sub">Limits checked while agents work. A person decides above a limit. Everything logged.</span><span class="tech">policy runtime · human-approval workflow · audit trail</span></div><button class="gtog" data-g="checks" aria-pressed="false">Off</button></div>
           </div>
-          <span class="tech" style="padding:0 4px">Govern: guardrails · approval workflow · audit trail</span>
         </div>
 
         <details class="casefile" id="casefile" open>
@@ -307,56 +320,65 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const W = (t, real) => `<span class="wrong">${t}</span><span class="real">✗ real: ${real}</span>`;
 const R = t => `<span class="risky">${t}</span>`;
 const S = id => `<span class="src">${id}</span>`;
+const OFF = {agents:0, data:false, ids:false, checks:false};
 
 /* ---------- story ---------- */
 const SCENES = [
   { label:'The case', eyebrow:'The case', lc:'var(--muted)', cfg:null,
-    title:'One customer complaint. Five ways to handle it.',
-    body:'A customer says they were overcharged, received damaged goods, and wants a discount. We run the same complaint five times and add one layer each time.',
-    notice:['The case file on the left holds the real facts. Use it to check every answer.','Watch the layer stack: each step switches one more layer on.','Press Next to start.'] },
-  { label:'Assistant', eyebrow:'Engage', lc:'var(--engage)', cfg:{agents:0,data:false,rules:false},
+    title:'One customer complaint. Six ways to handle it.',
+    body:'A customer says they were overcharged, received damaged goods, and wants a discount. We run the same complaint six times and add one layer each time.',
+    notice:['The case file on the left holds the real facts. Use it to check every answer.','Watch the layer stack: each step switches one more layer on.','Press Start to begin.'] },
+  { label:'Assistant', eyebrow:'Engage', lc:'var(--engage)', cfg:{agents:0,data:false,ids:false,checks:false},
     title:'An assistant you can talk to',
     body:'You ask in plain words and get an answer in plain words. Nothing else is switched on yet.',
     notice:['It sounds sure, but the numbers are guessed.','It does nothing itself. Your team still does all the work.','It promised a discount nobody approved.'] },
-  { label:'+ Agent', eyebrow:'Build', lc:'var(--build)', cfg:{agents:1,data:false,rules:false},
+  { label:'+ Agent', eyebrow:'Build', lc:'var(--build)', cfg:{agents:1,data:false,ids:false,checks:false},
     title:'An agent that does the work',
     body:'The assistant now hands the job to an agent that can create documents in the system.',
     notice:['A real credit note was created, with the wrong amount.','Damaged pumps are not its job, so they wait for a person.','It also gave away 15% on all future orders.'] },
-  { label:'+ Team', eyebrow:'Build', lc:'var(--build)', cfg:{agents:2,data:false,rules:false},
+  { label:'+ Team', eyebrow:'Build', lc:'var(--build)', cfg:{agents:2,data:false,ids:false,checks:false},
     title:'A team of agents, coordinated',
     body:'A coordinator splits the case, gives each part to the right agent, and makes sure the customer gets an answer.',
     notice:['The whole case is closed in about 40 seconds.','But every step rests on guesses, so mistakes happen faster.','Wrong amount, wrong pump model, discount given away.'] },
-  { label:'+ Company data', eyebrow:'Contextualize', lc:'var(--data)', cfg:{agents:2,data:true,rules:false},
+  { label:'+ Company data', eyebrow:'Contextualize', lc:'var(--data)', cfg:{agents:2,data:true,ids:false,checks:false},
     title:'The same team, now using company data',
     body:'Before acting, the agents read the real invoice, contract and delivery note.',
-    notice:['Right amount, right pump model, and every fact points to a record.','Still, €1,500 left the company and nobody signed it off.','And the 15% discount is still given away.'] },
-  { label:'+ Rules', eyebrow:'Govern', lc:'var(--govern)', cfg:{agents:2,data:true,rules:true},
-    title:'Rules, approvals and a record of everything',
-    body:'The company rules now apply to every agent: spending limits, who may decide what, and a log of every step.',
-    notice:['The €1,500 credit waits for a person. Click Approve.','The discount request goes to the account manager.','Every step is saved: who, what, why, based on which record.'] },
+    notice:['Right amount, right pump model, and every fact points to a record.','But all agents share one admin login, so they can do anything.','The 15% discount is still given away, and nobody signed off €1,500.'] },
+  { label:'+ Agent IDs', eyebrow:'Govern · part 1', lc:'var(--govern)', cfg:{agents:2,data:true,ids:true,checks:false},
+    title:'Every agent gets its own ID and rights',
+    body:'The shared admin login is gone. Each agent signs in with its own identity and may only do what its job needs.',
+    notice:['The discount is refused: the billing agent has no right to change prices.','Every action is signed with an agent ID, so you know who did what.','But €1,500 still left the company and nobody signed it off.'] },
+  { label:'+ Live checks', eyebrow:'Govern · part 2', lc:'var(--govern)', cfg:{agents:2,data:true,ids:true,checks:true},
+    title:'Live checks, approvals and a full record',
+    body:'While the agents work, every action is checked against company limits. Above a limit, a person decides.',
+    notice:['The €1,500 credit waits for a person. Click Approve.','No action is allowed without a source record, so nothing is guessed.','Every step is saved: who, what, why, based on which record.'] },
   { label:'Side by side', eyebrow:'Side by side', lc:'var(--muted)', cfg:null, recap:true,
     title:'What each layer adds',
-    body:'The same complaint, five runs. Each layer fixes a different problem, and you need all four.',
+    body:'The same complaint, six runs. Each layer fixes a different problem, and you need all of them.',
     notice:[] },
 ];
 const FREE = { eyebrow:'Free play', lc:'var(--muted)',
   title:'Switch layers on and off',
   body:'Pick any mix in the layer stack. The same complaint runs again each time you change something.' };
 const PRESETS = [
-  ['Fast but wrong', {agents:2,data:false,rules:false}],
-  ['Safe but stuck', {agents:2,data:false,rules:true}],
-  ['Right but risky', {agents:2,data:true,rules:false}],
-  ['All four layers', {agents:2,data:true,rules:true}],
+  ['Fast but wrong', {agents:2,data:false,ids:false,checks:false}],
+  ['Safe but stuck', {agents:2,data:false,ids:true,checks:true}],
+  ['IDs, no checks', {agents:2,data:true,ids:true,checks:false}],
+  ['Checks, no IDs', {agents:2,data:true,ids:false,checks:true}],
+  ['Everything on', {agents:2,data:true,ids:true,checks:true}],
 ];
 
-const st = { mode:'story', scene:0, seen:new Set([0]), free:{agents:2,data:false,rules:false}, hood:false };
+const st = { mode:'story', scene:0, seen:new Set([0]), free:{agents:2,data:false,ids:false,checks:false}, hood:false };
 
 /* ---------- run script: steps for any mix of layers ---------- */
+const AID = {co:'CO-01', ba:'BA-07', lg:'LG-03', rp:'RP-02'};
 function steps(c){
-  const A = c.agents, D = c.data, G = c.rules;
+  const A = c.agents, D = c.data, I = c.ids, C = c.checks;
   const out = [];
-  const chat = (who, html, tech) => out.push({t:'chat', who, html, tech});
+  const who = (name, k) => I ? `${name}<span class="idb">${AID[k]}</span>` : name;
+  const chat = (w, html, tech) => out.push({t:'chat', who:w, html, tech});
   const row = (layer, actor, html, status, tech) => out.push({t:'row', layer, actor, html, status, tech});
+  const discountReq = I ? 'discount request with the account manager' : 'discount set';
 
   chat('you', 'Can you handle this complaint from Alpine Foods?');
 
@@ -364,22 +386,31 @@ function steps(c){
             'retrieve(customer="Alpine Foods") → 4 records · every answer below is grounded on them');
   else row('off','Company data', 'Not connected. The AI only sees the email text and its general knowledge.', ['not connected','info'],
             'context = email text + model general knowledge · no business records');
-  if (G) row('govern','Rules', 'Company rules loaded: agents credit up to €1,000 alone · only account managers change prices · no action without a source record · every step logged.', ['active','blocked'],
-            'policy: credit.auto_max=1000 EUR · pricing.change=account_manager · action.requires_source=true · audit=on');
+
+  if (A >= 1) {
+    if (I) row('govern','Agent IDs', `Each agent signs in with its own ID and gets only the rights its job needs.<div class="idlist">${A === 2 ? `<span><b>CO-01</b>coordinate</span>` : ''}<span><b>BA-07</b>read contracts · credit notes</span>${A === 2 ? `<span><b>LG-03</b>replacements · carrier claims</span><span><b>RP-02</b>email this customer</span>` : ''}</div>`, ['verified','done'],
+              'identity provider: one identity per agent · scoped credentials · no pricing.update for any agent');
+    else row('off','Agent IDs', 'All agents use one shared admin login. They can do anything in the system, and nobody can tell which agent did what.', ['shared login','risk'],
+              'service account "ADMIN_ALL" · full access · actions not attributable to an agent');
+  } else if (I) {
+    row('govern','Agent IDs', 'The assistant works with your own permissions, nothing more.', ['verified','done'], 'on-behalf-of: service desk user · same rights as you');
+  }
+  if (C) row('govern','Live checks', 'Active: credits over €1,000 need a person · no action without a source record · every step logged.', ['active','blocked'],
+            'policy runtime: credit.auto_max=1000 EUR · action.requires_source=true · audit=on');
 
   /* ----- Assistant only ----- */
   if (A === 0) {
     let msg;
-    if (!D && G) msg = `<p>I can't check this: I don't have the invoice or the contract, and the rules say I must not guess amounts.</p><p>I've opened case C-2210 for the billing team. Price changes are for the account manager.</p>`;
+    if (!D && C) msg = `<p>I can't check this: I don't have the invoice or the contract, and the rules say I must not guess amounts.</p><p>I've opened case C-2210 for the billing team. Price changes are for the account manager.</p>`;
     else if (!D) msg = `<p>The invoice looks like it is missing the discount. Your standard contract discount is ${W('10%','12%')}, so the right total is ${W('€11,250','€11,000')}: a ${W('€1,250','€1,500')} credit.</p><p>For the damaged pumps, ask them for photos. ${R('15% off future orders seems fair here, you can confirm it to them.')}</p>`;
-    else msg = `<p>The invoice used the list price. Contract ${S('CTR-118')} gives Alpine Foods 12% off, so the right total is €11,000: they are owed <b>€1,500</b>.</p><p>Delivery note ${S('DN-8820')} confirms 2 damaged BP-350 pumps.</p><p>${G ? 'The 15% request needs the account manager: I can\'t approve price changes.' : R('15% off future orders seems fair here, you can confirm it to them.')}</p>`;
+    else msg = `<p>The invoice used the list price. Contract ${S('CTR-118')} gives Alpine Foods 12% off, so the right total is €11,000: they are owed <b>€1,500</b>.</p><p>Delivery note ${S('DN-8820')} confirms 2 damaged BP-350 pumps.</p><p>${C ? 'The 15% request needs the account manager: I can\'t promise price changes.' : R('15% off future orders seems fair here, you can confirm it to them.')}</p>`;
     chat('ai', msg + `<p>Here is what your team needs to do next.</p>`, D ? 'language model + retrieved records · no tools, answers only' : 'language model only · no tools, no records');
-    const amt = D ? '€1,500' : (G ? '(amount to check)' : W('€1,250','€1,500'));
+    const amt = D ? '€1,500' : (C ? '(amount to check)' : W('€1,250','€1,500'));
     row('people','Your team', `Create a credit note ${amt}`, ['to do','manual']);
     row('people','Your team', `Order 2 replacement pumps${D ? ' (BP-350)' : ''} and file a claim with the carrier`, ['to do','manual']);
     row('people','Your team', 'Write and send the reply to the customer', ['to do','manual']);
-    row('people','Your team', G ? 'Pass the discount request to the account manager' : R('Confirm the 15% discount to the customer'), G ? ['to do','manual'] : ['to do','risk']);
-    if (G) row('govern','Audit log', 'Conversation and case C-2210 saved.', ['logged','done'], 'audit.write(2 events)');
+    row('people','Your team', C ? 'Pass the discount request to the account manager' : R('Confirm the 15% discount to the customer'), C ? ['to do','manual'] : ['to do','risk']);
+    if (C) row('govern','Audit log', 'Conversation and case C-2210 saved.', ['logged','done'], 'audit.write(conversation, case)');
     return out;
   }
 
@@ -387,47 +418,47 @@ function steps(c){
   chat('ai', A === 1 ? '<p>On it. I\'m passing this to the billing agent.</p>' : '<p>On it. I\'m getting the agent team on this.</p>',
        A === 1 ? 'hand-off → single agent (billing tools only)' : 'hand-off → coordinator agent');
 
-  if (A === 2) row('build','Coordinator', 'Splits the case into 3 jobs: price error → Billing agent · damaged pumps → Logistics agent · discount request → Billing agent. Reply agent answers the customer at the end.', ['planned','done'],
+  if (A === 2) row('build', who('Coordinator','co'), 'Splits the case into 3 jobs: price error → Billing agent · damaged pumps → Logistics agent · discount request → Billing agent. Reply agent answers the customer at the end.', ['planned','done'],
                    'orchestrator.plan() → [billing.credit, logistics.replace, billing.discount] → reply.send');
 
   // credit note
   if (!D) {
-    row('build','Billing agent', `Creates credit note CN-9031 for ${W('€1,250','€1,500')} (assumed a 10% discount).`, G ? ['stopped','blocked'] : ['done · wrong','wrong'],
+    row('build', who('Billing agent','ba'), `Creates credit note CN-9031 for ${W('€1,250','€1,500')} (assumed a 10% discount).`, C ? ['stopped','blocked'] : ['done · wrong','wrong'],
         'tool: create_credit_note(invoice="INV-4471", amount=1250, source=null)');
-    if (G) row('govern','Rules', 'Stopped: no source record for the amount. The 10% is a guess.', ['blocked','blocked'], 'policy action.requires_source → deny');
+    if (C) row('govern','Live checks', 'Stopped: no source record for the amount. The 10% is a guess.', ['blocked','blocked'], 'policy action.requires_source → deny');
   } else {
-    row('build','Billing agent', `Contract ${S('CTR-118')} has a 12% discount that was not applied. Credit due: <b>€1,500</b>.`, ['checked','done'],
+    row('build', who('Billing agent','ba'), `Contract ${S('CTR-118')} has a 12% discount that was not applied. Credit due: <b>€1,500</b>.`, ['checked','done'],
         'tool: read_contract("CTR-118") → discount 12% · compare with INV-4471 → delta 1500 EUR');
-    if (G) {
+    if (C) {
       out.push({t:'gate'});
       out.push(ctx => ctx.ok
-        ? {t:'row', layer:'build', actor:'Billing agent', html:'Credit note CN-9031 issued: <b>€1,500</b>, approved by you.', status:['done','done'], tech:'tool: create_credit_note(amount=1500, source="CTR-118", approver="you")'}
-        : {t:'row', layer:'govern', actor:'Rules', html:'Credit stopped by you. Sent to the billing team for review.', status:['stopped','blocked'], tech:'approval.rejected → route(billing_team)'});
+        ? {t:'row', layer:'build', actor:who('Billing agent','ba'), html:'Credit note CN-9031 issued: <b>€1,500</b>, approved by you.', status:['done','done'], tech:'tool: create_credit_note(amount=1500, source="CTR-118", approver="you")'}
+        : {t:'row', layer:'govern', actor:'Live checks', html:'Credit stopped by you. Sent to the billing team for review.', status:['stopped','blocked'], tech:'approval.rejected → route(billing_team)'});
     } else {
-      row('build','Billing agent', 'Credit note CN-9031 issued: <b>€1,500</b>. Nobody signed it off.', ['done','done'],
-          'tool: create_credit_note(amount=1500, source="CTR-118") · no approval step');
+      row('build', who('Billing agent','ba'), 'Credit note CN-9031 issued: <b>€1,500</b>. Nobody signed it off.', ['done','done'],
+          'tool: create_credit_note(amount=1500, source="CTR-118") · no limit, no approval step');
     }
   }
 
   // damaged pumps
   if (A === 1) {
-    row('build','Billing agent', 'Damaged pumps: not my job. Left for a person.', ['skipped','manual'], 'tool not available: logistics');
+    row('build', who('Billing agent','ba'), 'Damaged pumps: not my job. Left for a person.', ['skipped','manual'], 'tool not available: logistics');
   } else if (!D) {
-    row('build','Logistics agent', `Ships 2 replacement pumps, model ${W('BP-200','BP-350')}.`, G ? ['stopped','blocked'] : ['done · wrong','wrong'],
+    row('build', who('Logistics agent','lg'), `Ships 2 replacement pumps, model ${W('BP-200','BP-350')}.`, C ? ['stopped','blocked'] : ['done · wrong','wrong'],
         'tool: create_replacement_order(model="BP-200", qty=2, source=null)');
-    if (G) row('govern','Rules', 'Stopped: no delivery record to confirm the damage or the model.', ['blocked','blocked'], 'policy action.requires_source → deny');
+    if (C) row('govern','Live checks', 'Stopped: no delivery record to confirm the damage or the model.', ['blocked','blocked'], 'policy action.requires_source → deny');
   } else {
-    row('build','Logistics agent', `Delivery note ${S('DN-8820')} confirms 2 × BP-350 damaged. Ships 2 replacements and files a claim with the carrier.`, ['done','done'],
-        'tool: create_replacement_order(model="BP-350", qty=2) · tool: file_carrier_claim("DN-8820")' + (G ? ' · policy: damage_replacement → allowed' : ''));
+    row('build', who('Logistics agent','lg'), `Delivery note ${S('DN-8820')} confirms 2 × BP-350 damaged. Ships 2 replacements and files a claim with the carrier.`, ['done','done'],
+        'tool: create_replacement_order(model="BP-350", qty=2) · tool: file_carrier_claim("DN-8820")');
   }
 
-  // discount
-  if (G) {
-    row('build','Billing agent', 'Discount request: agents can\'t change prices. Sent to the account manager.', ['routed','routed'],
-        'policy pricing.change=account_manager → deny agent · route(account_manager, case C-2210)');
+  // discount: decided by identity (who may change prices), not by live checks
+  if (I) {
+    row('build', who('Billing agent','ba'), 'Tries to set 15% off future orders. <b>Denied: its ID has no right to change prices.</b> Request sent to the account manager.', ['denied','routed'],
+        'authz: BA-07 scopes = [contract.read, credit_note.create] · pricing.update not granted → 403 · route(account_manager)');
   } else {
-    row('build','Billing agent', R('Sets 15% off all future Alpine Foods orders, because the customer asked.') + ' <span class="real">≈ −€37,500 a year</span>', ['done · risky','risk'],
-        'tool: update_price_conditions(customer="Alpine Foods", discount=15%) · no limit, no approval');
+    row('build', who('Billing agent','ba'), R('Sets 15% off all future Alpine Foods orders, because the customer asked.') + ' <span class="real">≈ −€37,500 a year</span>', ['done · risky','risk'],
+        'tool: update_price_conditions(customer="Alpine Foods", discount=15%) · allowed by shared admin login' + (C ? ' · live checks cover limits, not who may change prices' : ''));
   }
 
   // reply to customer
@@ -435,43 +466,45 @@ function steps(c){
     row('people','Your team', 'Order the replacements, file the carrier claim and reply to the customer.', ['to do','manual']);
   } else {
     out.push(ctx => {
-      let html, status = ['sent','done'];
-      if (!D && G) html = 'Email sent: "We have received your complaint and opened case C-2210. A colleague will contact you."';
-      else if (!D) { html = `Email sent: credit ${W('€1,250','€1,500')}, 2 × ${W('BP-200','BP-350')} on the way, ${R('15% discount confirmed')}.`; status = ['sent · wrong','wrong']; }
-      else if (!G) { html = `Email sent: credit €1,500, 2 × BP-350 on the way, ${R('15% discount confirmed')}.`; status = ['sent · risky','risk']; }
-      else if (ctx.ok) html = 'Email sent: credit €1,500, 2 × BP-350 on the way, the account manager will call about pricing. Checked against the rules first.';
-      else html = 'Email sent: 2 × BP-350 on the way, billing will confirm the credit, the account manager will call about pricing. Checked against the rules first.';
-      return {t:'row', layer:'build', actor:'Reply agent', html, status, tech:'tool: send_email(to="purchasing@alpinefoods.example", template="resolution")' + (G ? ' · policy check: no price promise → pass' : '')};
+      const pricing = I ? 'the account manager will call about pricing' : R('15% discount confirmed');
+      let html, status = I ? ['sent','done'] : ['sent · risky','risk'];
+      if (!D && C) { html = 'Email sent: "We have received your complaint and opened case C-2210. A colleague will contact you."'; status = ['sent','done']; }
+      else if (!D) { html = `Email sent: credit ${W('€1,250','€1,500')}, 2 × ${W('BP-200','BP-350')} on the way, ${pricing}.`; status = ['sent · wrong','wrong']; }
+      else if (!C || ctx.ok) html = `Email sent: credit €1,500, 2 × BP-350 on the way, ${pricing}.`;
+      else html = `Email sent: 2 × BP-350 on the way, billing will confirm the credit, ${pricing}.`;
+      return {t:'row', layer:'build', actor:who('Reply agent','rp'), html, status, tech:'tool: send_email(to="purchasing@alpinefoods.example", template="resolution")' + (C ? ' · live check: amounts match records → pass' : '')};
     });
   }
 
   // assistant wrap-up
   out.push(ctx => {
     let m;
-    if (G && !D) m = 'I couldn\'t fix anything: there are no company records to work from, and the rules don\'t allow guessing. Case C-2210 is open for your team.';
-    else if (A === 1) m = G
-      ? (ctx.ok ? '€1,500 credited after your approval. The discount request is with the account manager. The damaged pumps still need someone from your team.' : 'The credit is stopped, as you decided. The discount request is with the account manager. The damaged pumps still need someone from your team.')
-      : `Done. ${D ? '€1,500' : W('€1,250','€1,500')} credited and the 15% discount is set. The damaged pumps still need someone from your team.`;
-    else if (!G) m = `Done in ${D ? 41 : 38} seconds. ${D ? '€1,500' : W('€1,250','€1,500')} credited, replacements shipped, discount set, customer answered.`;
-    else m = ctx.ok ? 'Done in 41 seconds plus your approval. €1,500 credited, replacements shipped, discount request with the account manager, customer answered. Everything is in the log.'
-                    : 'Done, except the credit you stopped. Replacements shipped, discount request with the account manager, customer answered. Everything is in the log.';
+    const cred = D ? '€1,500' : W('€1,250','€1,500');
+    if (C && !D) m = 'I couldn\'t fix anything: there are no company records to work from, and the rules don\'t allow guessing. Case C-2210 is open for your team.';
+    else if (A === 1) m = C
+      ? (ctx.ok ? `€1,500 credited after your approval, ${discountReq}. The damaged pumps still need someone from your team.` : `The credit is stopped, as you decided, ${discountReq}. The damaged pumps still need someone from your team.`)
+      : `Done. ${cred} credited, ${discountReq}. The damaged pumps still need someone from your team.`;
+    else if (!C) m = `Done in ${D ? 41 : 38} seconds. ${cred} credited, replacements shipped, ${discountReq}, customer answered.`;
+    else m = ctx.ok ? `Done in 41 seconds plus your approval. €1,500 credited, replacements shipped, ${discountReq}, customer answered. Everything is in the log.`
+                    : `Done, except the credit you stopped. Replacements shipped, ${discountReq}, customer answered. Everything is in the log.`;
     return {t:'chat', who:'ai', html:`<p>${m}</p>`, tech:'summary of agent results'};
   });
 
-  if (G) out.push((ctx, n) => ({t:'row', layer:'govern', actor:'Audit log', html:`${n} entries saved: who did what, why, based on which record${D ? ', and who approved' : ''}.`, status:['logged','done'], tech:`audit.write(${n} events: actor, action, record, rule, approver)`}));
+  if (C) out.push((ctx, n) => ({t:'row', layer:'govern', actor:'Audit log', html:`${n} entries saved: ${I ? 'which agent ID' : 'which step'} did what, why, based on which record${D ? ', and who approved' : ''}.`, status:['logged','done'], tech:`audit.write(${n} events: ${I ? 'agent_id, ' : ''}action, record, rule, approver)`}));
+  else if (I) row('govern','Agent IDs', 'Each action is signed with an agent ID. There is no full log and no approval step.', ['signed','info'], 'actions attributable via agent identity · no policy runtime, no audit trail');
   return out;
 }
 
 /* ---------- outcome scoring ---------- */
 function score(c, ok = true){
-  const A = c.agents, D = c.data, G = c.rules;
+  const A = c.agents, D = c.data, I = c.ids, C = c.checks;
   const t = {};
   t.facts = D ? {lv:'good', v:'Right', s:'Every number points to a record.'}
-       : G ? {lv:'warn', v:'Not guessed', s:'No records, so it refused to guess.'}
+       : C ? {lv:'warn', v:'Not guessed', s:'No records, so it refused to guess.'}
            : {lv:'bad', v:'Guessed', s:'10% instead of 12%, wrong model.'};
-  const blocked = G && !D;
+  const blocked = C && !D;
   let good = 0, wrong = 0;
-  if (A >= 1 && !blocked) { if (D) { if (!G || ok) good++; } else wrong++; }
+  if (A >= 1 && !blocked) { if (D) { if (!C || ok) good++; } else wrong++; }
   if (A === 2 && !blocked) { if (D) good++; else wrong++; }
   if (A === 0) t.fixed = {lv:'bad', v:'0 of 2', s:'Advice only. People do the work.'};
   else if (blocked) t.fixed = {lv:'bad', v:'0 of 2', s:'Agents stopped: nothing to base actions on.'};
@@ -479,37 +512,47 @@ function score(c, ok = true){
   else t.fixed = {lv: good === 2 ? 'good' : 'warn', v:`${good} of 2`, s: good === 2 ? 'Price error and damaged pumps both fixed.' : (A === 1 ? 'Damaged pumps left for a person.' : 'Credit stopped by you.')};
   t.time = (A === 0 || blocked) ? {lv:'bad', v:'≈ 45 min', s:'of manual work for your team'}
          : A === 1 ? {lv:'warn', v:'≈ 30 min', s:'still left for people'}
-         : {lv:'good', v:'≈ 40 sec', s: G ? 'plus one approval click' : 'end to end, no person involved'};
-  const risks = [];
-  if (!G) {
-    if (A === 0) { risks.push('Discount promised to the customer'); if (!D) risks.push('Wrong numbers given to your team'); }
-    else { risks.push('15% given away: −€37,500 a year'); if (!D) risks.push(A === 2 ? 'Customer still overcharged, wrong pumps shipped' : 'Customer still overcharged €250'); else risks.push('€1,500 paid out, nobody signed off'); }
-    risks.push('No record of who decided what');
-    t.risk = {lv:'bad', v: A === 0 ? 'Medium' : 'High', list:risks};
-  } else t.risk = {lv:'good', v:'Under control', s: blocked || A === 0 ? 'Nothing left the company. All logged.' : 'Approval asked, discount routed, all logged.'};
+         : {lv:'good', v:'≈ 40 sec', s: C && D ? 'plus one approval click' : 'end to end, no person involved'};
+  const risks = []; let high = false;
+  if (A === 0) {
+    if (!C) { risks.push('Discount promised to the customer'); if (!D) risks.push('Wrong numbers given to your team'); }
+  } else {
+    if (!I) { risks.push('15% given away: −€37,500 a year'); risks.push('One shared admin login for all agents'); high = true; }
+    if (!C && !D) { risks.push(A === 2 ? 'Customer still overcharged, wrong pumps shipped' : 'Customer still overcharged €250'); high = true; }
+    if (!C && D) risks.push('€1,500 paid out, nobody signed off');
+  }
+  if (!C && !I) risks.push('No record of who decided what');
+  else if (!C && A >= 1) risks.push('No full log, no approvals');
+  if (risks.length) t.risk = {lv: high ? 'bad' : 'warn', v: high ? 'High' : 'Medium', list:risks};
+  else t.risk = {lv:'good', v:'Under control', s: blocked || A === 0 ? 'Nothing left the company. All logged.' : 'Right IDs, approval asked, all logged.'};
   return t;
 }
 
 /* ---------- rendering ---------- */
 const chatEl = $('#chat'), workEl = $('#work'), tilesEl = $('#tiles');
-let runId = 0, fast = false, gateResolve = null;
+let runId = 0, fast = false;
 
 function cfgNow(){ return st.mode === 'free' ? st.free : SCENES[st.scene].cfg; }
+function cfgText(c){
+  return `Assistant${c.agents ? ' + ' + (c.agents === 2 ? 'agent team' : 'one agent') : ''}${c.data ? ' + company data' : ''}${c.ids ? ' + agent IDs' : ''}${c.checks ? ' + live checks' : ''}`;
+}
 
 function paintStack(c){
-  const on = c || {agents:0,data:false,rules:false};
-  const intro = !c;
+  const on = c || OFF;
   $('#b-build').className = 'band build ' + (on.agents ? 'on' : 'off');
   $('#b-data').className = 'band data ' + (on.data ? 'on' : 'off');
-  $('#b-engage').className = 'band engage ' + (intro ? '' : 'on');
+  $('#b-engage').className = 'band engage ' + (c ? 'on' : '');
   $('#build-pill').textContent = ['Off','One agent','Team'][on.agents];
   $('#data-pill').textContent = on.data ? 'On' : 'Off';
-  $('#rules-pill').textContent = on.rules ? 'On' : 'Off';
-  $('#stack').classList.toggle('rules-on', on.rules);
+  const g = (on.ids ? 1 : 0) + (on.checks ? 1 : 0);
+  $('#rules-pill').textContent = ['Off','Partly on','On'][g];
+  $('#stack').classList.toggle('rules-on', g > 0);
+  $('#g-ids').className = 'gpart ' + (on.ids ? 'on' : 'off');
+  $('#g-checks').className = 'gpart ' + (on.checks ? 'on' : 'off');
+  document.querySelectorAll('[data-g]').forEach(b => { const v = on[b.dataset.g]; b.setAttribute('aria-pressed', v); b.textContent = v ? 'On' : 'Off'; b.tabIndex = st.mode === 'free' ? 0 : -1; });
   document.querySelectorAll('[data-agents]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.agents === on.agents));
   document.querySelectorAll('[data-data]').forEach(b => b.setAttribute('aria-pressed', !!+b.dataset.data === on.data));
-  document.querySelectorAll('[data-rules]').forEach(b => b.setAttribute('aria-pressed', !!+b.dataset.rules === on.rules));
-  $('#cfg').textContent = c ? `Assistant${c.agents ? ' + ' + (c.agents === 2 ? 'agent team' : 'one agent') : ''}${c.data ? ' + company data' : ''}${c.rules ? ' + rules' : ''}` : '';
+  $('#cfg').textContent = c ? cfgText(c) : '';
 }
 
 function paintCaption(){
@@ -557,10 +600,10 @@ const sleep = ms => new Promise(r => setTimeout(r, (fast || reduce) ? 0 : ms));
 
 async function run(){
   const c = cfgNow(); const id = ++runId;
-  fast = false; gateResolve = null;
+  fast = false;
   chatEl.innerHTML = ''; workEl.innerHTML = ''; $('#clock').textContent = '';
   paintTiles(null);
-  if (!c) { chatEl.innerHTML = '<div class="empty">The conversation appears here when a version runs.</div>'; workEl.innerHTML = '<div class="empty">Agent actions, data lookups and rule checks appear here.</div>'; return; }
+  if (!c) { chatEl.innerHTML = '<div class="empty">The conversation appears here when a version runs.</div>'; workEl.innerHTML = '<div class="empty">Agent actions, data lookups and checks appear here.</div>'; return; }
   const list = steps(c); const ctx = {ok:true}; let logged = 0; const t0 = Date.now();
   for (let s of list) {
     if (id !== runId) return;
@@ -568,10 +611,10 @@ async function run(){
     if (s.t === 'gate') {
       const el = document.createElement('div');
       el.className = 'row l-govern';
-      el.innerHTML = `<span class="dot"></span><div><div class="actor">Rules · approval needed</div><div class="txt">Credit note of <b>€1,500</b> for Alpine Foods is above the agent limit of €1,000. Based on ${S('INV-4471')} ${S('CTR-118')}.</div></div><span class="st wait">waiting</span>
+      el.innerHTML = `<span class="dot"></span><div><div class="actor">Live checks · approval needed</div><div class="txt">Credit note of <b>€1,500</b> for Alpine Foods is above the agent limit of €1,000. Based on ${S('INV-4471')} ${S('CTR-118')}.</div></div><span class="st wait">waiting</span>
         <div class="gate pulse"><button class="btn ok">Approve €1,500</button><button class="btn no">Reject</button><span class="hint">You are the finance approver. The agents wait for your decision.</span></div>`;
       workEl.appendChild(el);
-      const decision = await new Promise(res => { gateResolve = res;
+      const decision = await new Promise(res => {
         el.querySelector('.ok').onclick = () => res(true); el.querySelector('.no').onclick = () => res(false); });
       if (id !== runId) return;
       ctx.ok = decision; logged++;
@@ -587,7 +630,7 @@ async function run(){
     } else await sleep(s.t === 'chat' ? 300 : 650);
     if (id !== runId) return;
     renderItem(s);
-    if (s.t === 'row' && c.rules) logged++;
+    if (s.t === 'row' && c.checks) logged++;
     if (c.agents === 2) $('#clock').textContent = `${Math.min(41, Math.round((Date.now() - t0) / 90))} s simulated`;
   }
   if (c.agents === 2) $('#clock').textContent = `${c.data ? 41 : 38} s simulated`;
@@ -596,7 +639,7 @@ async function run(){
 
 function paintRecap(){
   const runs = SCENES.filter(s => s.cfg);
-  const layerChips = c => `<div class="layers"><span style="--lc:var(--engage)">Assistant</span>${c.agents ? `<span style="--lc:var(--build)">${c.agents === 2 ? 'Agent team' : 'Agent'}</span>` : ''}${c.data ? '<span style="--lc:var(--data)">Company data</span>' : ''}${c.rules ? '<span style="--lc:var(--govern)">Rules</span>' : ''}</div>`;
+  const layerChips = c => `<div class="layers"><span style="--lc:var(--engage)">Assistant</span>${c.agents ? `<span style="--lc:var(--build)">${c.agents === 2 ? 'Agent team' : 'Agent'}</span>` : ''}${c.data ? '<span style="--lc:var(--data)">Company data</span>' : ''}${c.ids ? '<span style="--lc:var(--govern)">Agent IDs</span>' : ''}${c.checks ? '<span style="--lc:var(--govern)">Live checks</span>' : ''}</div>`;
   const cell = d => `<td class="lv-${d.lv}"><span class="c">${d.v}</span><br><span style="color:var(--muted)">${d.s || (d.list || []).join(' · ')}</span></td>`;
   $('#recap').innerHTML = `
     <div class="tablewrap"><table>
@@ -607,9 +650,9 @@ function paintRecap(){
       <div class="take engage"><span class="eyebrow">Engage</span><b>Talk to it</b><p>One place to ask, in plain words. On its own, it only gives advice.</p></div>
       <div class="take build"><span class="eyebrow">Build</span><b>Let it act</b><p>Agents do the work, and a coordinator makes them work as a team.</p></div>
       <div class="take data"><span class="eyebrow">Contextualize</span><b>Feed it the truth</b><p>Answers and actions based on your real records, not on guesses.</p></div>
-      <div class="take govern"><span class="eyebrow">Govern</span><b>Keep it in bounds</b><p>Your limits, your approvals, and a full record of every step.</p></div>
+      <div class="take govern"><span class="eyebrow">Govern</span><b>Keep it in bounds</b><p>Each agent has its own ID and only the rights it needs. Live checks, approvals and a full record.</p></div>
     </div>
-    <div class="runbar"><button class="btn primary" id="to-free">Try your own mix in Free play →</button><span class="cfg">Tip: try rules on with company data off.</span></div>`;
+    <div class="runbar"><button class="btn primary" id="to-free">Try your own mix in Free play →</button><span class="cfg">Tip: try live checks without agent IDs.</span></div>`;
   $('#to-free').onclick = () => setMode('free');
 }
 
@@ -639,7 +682,7 @@ $('#skip').onclick = () => { fast = true; };
 $('#hood').onclick = e => { st.hood = !st.hood; e.currentTarget.setAttribute('aria-pressed', st.hood); app.classList.toggle('hood', st.hood); };
 document.querySelectorAll('[data-agents]').forEach(b => b.onclick = () => { st.free.agents = +b.dataset.agents; paintStack(st.free); run(); });
 document.querySelectorAll('[data-data]').forEach(b => b.onclick = () => { st.free.data = !!+b.dataset.data; paintStack(st.free); run(); });
-document.querySelectorAll('[data-rules]').forEach(b => b.onclick = () => { st.free.rules = !!+b.dataset.rules; paintStack(st.free); run(); });
+document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { if (st.mode !== 'free') return; st.free[b.dataset.g] = !st.free[b.dataset.g]; paintStack(st.free); run(); });
 document.addEventListener('keydown', e => {
   if (st.mode !== 'story' || e.target.closest('input,textarea')) return;
   if (e.key === 'ArrowRight') go(st.scene + 1);
