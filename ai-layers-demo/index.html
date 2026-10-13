@@ -40,16 +40,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px}
 .seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-size:13.5px;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .12);font-weight:700}
-.switch{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:4px 0;font-size:13.5px;color:var(--muted)}
-.switch .knob{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;flex:none}
-.switch .knob::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--surface);transition:transform .2s}
-.switch[aria-pressed="true"] .knob{background:var(--ink)}
-.switch[aria-pressed="true"] .knob::after{transform:translateX(14px)}
-.switch[aria-pressed="true"]{color:var(--ink)}
 
 /* step rail */
-.rail{display:flex;align-items:center;gap:8px;padding-block:14px 6px;overflow-x:auto}
-.rail ol{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.rail{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-block:14px 6px}
+.rail ol{display:flex;gap:6px;list-style:none;margin:0;padding:2px;flex:1 1 0;min-width:0;overflow-x:auto}
 .rail li button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap;color:var(--muted)}
 .rail li button[aria-current="step"]{border-color:var(--ink);color:var(--ink);font-weight:700}
 .rail li button.seen{color:var(--ink)}
@@ -80,8 +74,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .frame-label .tag{background:var(--bg);padding:0 6px;display:flex;flex-direction:column;line-height:1.2}
 .stack.rules-on .frame-label .tag{color:var(--govern)}
 .band{--lc:var(--muted);border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;display:grid;gap:4px;transition:background .3s,border-color .3s,opacity .3s}
-.band.on{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 9%,var(--surface))}
-.band.off{opacity:.62}
+.band.on{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 6%,var(--surface))}
+.band.off{border-style:dashed;background:var(--bg)}
 .band.engage{--lc:var(--engage)} .band.build{--lc:var(--build)} .band.data{--lc:var(--data)}
 .band-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .band-name{font-weight:700;font-size:15px}
@@ -106,7 +100,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .gpart > div{display:grid;gap:2px;min-width:0}
 .gpart .sub{font-size:12.5px;color:var(--muted)}
 .gpart.on{border:1px solid var(--govern);background:color-mix(in srgb,var(--govern) 9%,var(--surface))}
-.gpart.off{opacity:.7}
+.gpart.off{background:var(--bg)}
 .gtog{flex:none;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .gtog[aria-pressed="true"]{background:var(--govern);border-color:var(--govern);color:var(--surface)}
 .story .gtog{cursor:default;pointer-events:none}
@@ -172,7 +166,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .typing{display:inline-flex;gap:4px;padding:12px}
 .typing i{width:6px;height:6px;border-radius:50%;background:var(--engage);opacity:.4;animation:blink 1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
-.src{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:4px;background:color-mix(in srgb,var(--data) 14%,var(--surface));color:var(--data);border:1px solid color-mix(in srgb,var(--data) 40%,transparent);white-space:nowrap}
+.src{display:inline-block;font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:4px;background:color-mix(in srgb,var(--data) 6%,var(--surface));color:var(--data);border:1px solid color-mix(in srgb,var(--data) 40%,transparent);white-space:nowrap}
 .wrong{text-decoration:underline wavy var(--bad);text-underline-offset:3px;font-weight:700}
 .real{font-size:11.5px;font-weight:700;color:var(--bad);margin-left:4px;white-space:nowrap;text-decoration:none;display:inline-block}
 .risky{background:color-mix(in srgb,var(--bad) 13%,transparent);padding:0 3px;border-radius:3px;font-weight:700}
@@ -344,6 +338,7 @@ td .layers span{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9
 
 <script>
 (() => {
+document.documentElement.lang = 'en';
 const $ = s => document.querySelector(s);
 const app = $('#app');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -545,7 +540,12 @@ function score(c, ok = true){
   if (A === 0) t.fixed = {lv:'bad', v:'0 of 2', s:'Advice only. People do the work.'};
   else if (blocked) t.fixed = {lv:'bad', v:'0 of 2', s:'Agents stopped: nothing to base actions on.'};
   else if (wrong) t.fixed = {lv:'bad', v:`${wrong} done, ${wrong} wrong`, s: A === 1 ? 'Wrong credit, damage left open.' : 'Wrong credit, wrong pumps shipped.'};
-  else t.fixed = {lv: good === 2 ? 'good' : 'warn', v:`${good} of 2`, s: good === 2 ? 'Price error and damaged pumps both fixed.' : (A === 1 ? 'Damaged pumps left for a person.' : 'Credit stopped by you.')};
+  else {
+    const open = [];
+    if (D && C && !ok) open.push('Credit stopped by you.');
+    if (A === 1) open.push('Damaged pumps left for a person.');
+    t.fixed = {lv: good === 2 ? 'good' : 'warn', v:`${good} of 2`, s: good === 2 ? 'Price error and damaged pumps both fixed.' : open.join(' ')};
+  }
   t.time = (A === 0 || blocked) ? {lv:'bad', v:'≈ 45 min', s:'of manual work for your team'}
          : A === 1 ? {lv:'warn', v:'≈ 30 min', s:'still left for people'}
          : {lv:'good', v:'≈ 40 sec', s: C && D ? 'plus one approval click' : 'end to end, no person involved'};
@@ -653,6 +653,8 @@ function paintCaption(){
 function paintRail(){
   $('#steps').innerHTML = SCENES.map((s,i) => `<li><button data-step="${i}" class="${st.seen.has(i) ? 'seen' : ''}" ${i === st.scene ? 'aria-current="step"' : ''}>${s.label}</button></li>`).join('');
   $('#steps').querySelectorAll('button').forEach(b => b.onclick = () => go(+b.dataset.step));
+  const cur = $('#steps [aria-current="step"]');
+  if (cur) { const ol = $('#steps'); ol.scrollLeft = Math.max(0, cur.offsetLeft - ol.offsetLeft - ol.clientWidth / 2 + cur.offsetWidth / 2); }
   $('#prev').disabled = st.scene === 0;
   $('#next').disabled = st.scene === SCENES.length - 1;
   $('#next').textContent = st.scene === 0 ? 'Start →' : 'Next →';
@@ -662,8 +664,8 @@ function tile(k, d){
   return `<div class="tile lv-${d.lv}"><span class="k">${k}</span><span class="v">${d.v}</span>${d.s ? `<span class="s">${d.s}</span>` : ''}${d.list ? `<ul>${d.list.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`;
 }
 function paintTiles(sc){
-  if (!sc) { tilesEl.innerHTML = ['Right facts?','Problems fixed','Time for your team','Risk'].map(k => tile(k,{lv:'none',v:'–',s:'Shown after the run'})).join(''); return; }
-  tilesEl.innerHTML = tile('Right facts?', sc.facts) + tile('Problems fixed', sc.fixed) + tile('Time for your team', sc.time) + tile('Risk', sc.risk);
+  if (!sc) { tilesEl.innerHTML = ['Right facts?','Problems fixed','Time to resolve','Risk'].map(k => tile(k,{lv:'none',v:'–',s:'Shown after the run'})).join(''); return; }
+  tilesEl.innerHTML = tile('Right facts?', sc.facts) + tile('Problems fixed', sc.fixed) + tile('Time to resolve', sc.time) + tile('Risk', sc.risk);
 }
 
 function sapTag(it){
@@ -740,7 +742,7 @@ function paintRecap(){
   const cell = d => `<td class="lv-${d.lv}"><span class="c">${d.v}</span><br><span style="color:var(--muted)">${d.s || (d.list || []).join(' · ')}</span></td>`;
   $('#recap').innerHTML = `
     <div class="tablewrap"><table>
-      <thead><tr><th>Run</th><th>Layers on</th><th>Right facts?</th><th>Problems fixed</th><th>Time for your team</th><th>Risk</th></tr></thead>
+      <thead><tr><th>Run</th><th>Layers on</th><th>Right facts?</th><th>Problems fixed</th><th>Time to resolve</th><th>Risk</th></tr></thead>
       <tbody>${runs.map((s,i) => { const sc = score(s.cfg); return `<tr><td><b>${i + 1}. ${s.label.replace('+ ','')}</b></td><td>${layerChips(s.cfg)}</td>${cell(sc.facts)}${cell(sc.fixed)}${cell(sc.time)}${cell(sc.risk)}</tr>`; }).join('')}</tbody>
     </table></div>
     <div class="takeaways">
