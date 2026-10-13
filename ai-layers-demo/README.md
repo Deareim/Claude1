@@ -28,6 +28,7 @@ The file is an HTML fragment without a doctype, because the Artifact publish wra
 ## Present it
 
 - **Story** mode: `Next →` / `← Back`, or the arrow keys. Each step runs automatically; `▶ Run` replays it and `Show all at once` skips the animation.
+- **Agent hand-offs**: in Story mode the run stops each time the work passes to another agent (Coordinator, Billing, Logistics, Reply). Click `Continue → …` or press Space/Enter when you are ready. `Show all at once` skips the remaining pauses; Free play never pauses.
 - **Build it**: click `▶ Describe the job`, then `Create agent`, then `Watch it work →`.
 - **+ Live checks**: click `Approve €1,500` (or `Reject`) while the agents wait.
 - **Free play**: switch any layer on or off in the left column, or use the preset mixes. "Safe but stuck" (rules without data) and "Checks, no IDs" are good for questions.

@@ -190,6 +190,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .gate .btn.no{color:var(--bad)}
 .gate .hint{font-size:12.5px;color:var(--muted);flex-basis:100%}
 .pulse{animation:pulse 1.4s ease-in-out infinite}
+.handoff{grid-column:2 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border-radius:8px;border:1px dashed var(--build);background:color-mix(in srgb,var(--build) 5%,var(--surface))}
+.handoff .btn{background:var(--build);border-color:var(--build);color:var(--surface);font-weight:700}
+.handoff .hint{font-size:12.5px;color:var(--muted)}
 
 /* outcome */
 .outcome h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
@@ -617,7 +620,7 @@ function showBuilder(){
 
 /* ---------- rendering ---------- */
 const chatEl = $('#chat'), workEl = $('#work'), tilesEl = $('#tiles');
-let runId = 0, fast = false;
+let runId = 0, fast = false, handoffResolve = null;
 
 function cfgNow(){ return st.mode === 'free' ? st.free : SCENES[st.scene].cfg; }
 function cfgText(c){
@@ -699,14 +702,29 @@ function renderItem(it){
 
 const sleep = ms => new Promise(r => setTimeout(r, (fast || reduce) ? 0 : ms));
 
+// Story mode: stop at each hand-off between agents until the presenter continues.
+function handoff(name){
+  const el = document.createElement('div');
+  el.className = 'row l-build';
+  el.innerHTML = `<span class="dot"></span><div><div class="actor">Hand-off</div><div class="txt">Next: <b>${name}</b></div></div><span class="st info">paused</span>
+    <div class="handoff"><button class="btn">Continue → ${name}</button><span class="hint">or press Space</span></div>`;
+  workEl.appendChild(el);
+  const btn = el.querySelector('button');
+  btn.focus({preventScroll:true});
+  return new Promise(res => {
+    handoffResolve = () => { handoffResolve = null; el.remove(); res(); };
+    btn.onclick = () => handoffResolve && handoffResolve();
+  });
+}
+
 async function run(){
   if (st.mode === 'story' && SCENES[st.scene].builder) return showBuilder();
   const c = cfgNow(); const id = ++runId;
-  fast = false;
+  fast = false; handoffResolve = null;
   chatEl.innerHTML = ''; workEl.innerHTML = ''; $('#clock').textContent = '';
   paintTiles(null);
   if (!c) { chatEl.innerHTML = '<div class="empty">The conversation appears here when a version runs.</div>'; workEl.innerHTML = '<div class="empty">Agent actions, data lookups and checks appear here.</div>'; return; }
-  const list = steps(c); const ctx = {ok:true}; let logged = 0; const t0 = Date.now();
+  const list = steps(c); const ctx = {ok:true}; let logged = 0, agent = null; const t0 = Date.now();
   for (let s of list) {
     if (id !== runId) return;
     if (typeof s === 'function') s = s(ctx, logged + 1);
@@ -732,6 +750,11 @@ async function run(){
       if (id !== runId) return;
     } else await sleep(s.t === 'chat' ? 300 : 650);
     if (id !== runId) return;
+    const who = s.t === 'row' && s.layer === 'build' ? s.actor.replace(/<.*$/, '') : null;
+    if (who && who !== agent) {
+      agent = who;
+      if (st.mode === 'story' && !fast) { await handoff(who); if (id !== runId) return; }
+    }
     renderItem(s);
     if (s.t === 'row' && c.checks) logged++;
     if (c.agents === 2) $('#clock').textContent = `${Math.min(41, Math.round((Date.now() - t0) / 90))} s simulated`;
@@ -784,7 +807,7 @@ $('#m-free').onclick = () => setMode('free');
 $('#prev').onclick = () => go(st.scene - 1);
 $('#next').onclick = () => go(st.scene + 1);
 $('#run').onclick = () => run();
-$('#skip').onclick = () => { fast = true; };
+$('#skip').onclick = () => { fast = true; if (handoffResolve) handoffResolve(); };
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
   const v = b.dataset.view;
   document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', x === b));
@@ -795,6 +818,7 @@ document.querySelectorAll('[data-data]').forEach(b => b.onclick = () => { st.fre
 document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { if (st.mode !== 'free') return; st.free[b.dataset.g] = !st.free[b.dataset.g]; paintStack(st.free); run(); });
 document.addEventListener('keydown', e => {
   if (st.mode !== 'story' || e.target.closest('input,textarea')) return;
+  if (handoffResolve && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); handoffResolve(); return; }
   if (e.key === 'ArrowRight') go(st.scene + 1);
   if (e.key === 'ArrowLeft') go(st.scene - 1);
 });

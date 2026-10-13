@@ -33,10 +33,16 @@ const expectTime = ({ agents: a, data: d, checks: c }) =>
   a === 0 || (c && !d) ? '≈ 45 min' : a === 1 ? '≈ 30 min' : '≈ 40 sec';
 const tilesDone = page => page.waitForFunction(() => [...document.querySelectorAll('#tiles .v')].length === 4 && ![...document.querySelectorAll('#tiles .v')].some(v => v.textContent === '–'));
 const tileVals = page => page.$$eval('#tiles .tile', ts => ts.map(t => ({ k: t.querySelector('.k').textContent, v: t.querySelector('.v').textContent, s: t.textContent })));
+// Plays a run to the end: continues at each agent hand-off and answers the approval step.
 async function settle(page, decision = 'ok') {
-  await page.waitForFunction(() => document.querySelector('.gate .ok') || ([...document.querySelectorAll('#tiles .v')].length === 4 && ![...document.querySelectorAll('#tiles .v')].some(v => v.textContent === '–')));
-  if (await page.$('.gate .ok')) await page.click(`.gate .${decision}`);
-  await tilesDone(page);
+  const handoffs = [];
+  for (;;) {
+    await page.waitForFunction(() => document.querySelector('.handoff button') || document.querySelector('.gate .ok') || ([...document.querySelectorAll('#tiles .v')].length === 4 && ![...document.querySelectorAll('#tiles .v')].some(v => v.textContent === '–')));
+    const h = await page.$('.handoff button');
+    if (h) { handoffs.push((await h.textContent()).replace('Continue → ', '')); await h.click(); continue; }
+    if (await page.$('.gate .ok')) { await page.click(`.gate .${decision}`); continue; }
+    return handoffs;
+  }
 }
 async function setFree(page, c) {
   await page.click(`[data-agents="${c.agents}"]`);
@@ -139,6 +145,44 @@ await test('live checks: a rejected credit shows in the work log, email, chat, t
     assert(/stopped/i.test(fixed.s), `agents=${agents}: 'Problems fixed' tile does not mention the stopped credit: "${fixed.s}"`);
     await page.context().close();
   }
+});
+
+await test('story: the run pauses at every agent hand-off until the presenter continues', async () => {
+  const page = await open();
+  const want = { 'Assistant': [], '+ Agent': ['Billing agent'], '+ Team': ['Coordinator', 'Billing agent', 'Logistics agent', 'Billing agent', 'Reply agent'],
+    '+ Live checks': ['Coordinator', 'Billing agent', 'Logistics agent', 'Billing agent', 'Reply agent'] };
+  const labels = await page.$$eval('#steps button', bs => bs.map(b => b.textContent));
+  for (const [label, seq] of Object.entries(want)) {
+    await page.click(`#steps button:text-is("${label}")`);
+    const got = await settle(page);
+    assert(JSON.stringify(got) === JSON.stringify(seq), `${label}: hand-offs ${JSON.stringify(got)}`);
+  }
+  // a paused run really waits
+  await page.click('#steps button:text-is("+ Team")');
+  await page.waitForSelector('.handoff button');
+  const rowsBefore = await page.$$eval('#work .row', r => r.length);
+  await page.waitForTimeout(1500);
+  const rowsAfter = await page.$$eval('#work .row', r => r.length);
+  const tilesEmpty = await page.$$eval('#tiles .v', v => v.every(x => x.textContent === '–'));
+  assert(rowsBefore === rowsAfter && tilesEmpty, `run did not wait (${rowsBefore} -> ${rowsAfter} rows, tiles empty: ${tilesEmpty})`);
+  // Space continues
+  const before = await page.$eval('.handoff button', b => b.textContent);
+  await page.keyboard.press('Space');
+  await page.waitForFunction(b => { const x = document.querySelector('.handoff button'); return !x || x.textContent !== b; }, before);
+  // Show all at once skips the remaining hand-offs
+  await page.click('#skip');
+  await tilesDone(page);
+  assert(!(await page.$('.handoff')), 'hand-off left on screen');
+  assert(labels.length === 9, 'steps');
+  assert(page.errors.length === 0, 'errors: ' + page.errors.join('; '));
+  await page.context().close();
+});
+
+await test('free play: no hand-off pauses', async () => {
+  const page = await open({}, '#free');
+  await setFree(page, { agents: 2, data: true, ids: true, checks: false });
+  assert((await settle(page)).length === 0, 'free play paused');
+  await page.context().close();
 });
 
 await test('under the hood: Off / Tech / SAP show the right labels', async () => {
