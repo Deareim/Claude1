@@ -26,6 +26,11 @@ async function open(opts = {}, hash = '') {
   await page.goto(PAGE + hash);
   return page;
 }
+// Expected outcome per layer mix, from the case facts (not copied from the app code).
+const expectFixed = ({ agents: a, data: d, checks: c }) =>
+  a === 0 || (c && !d) ? '0 of 2' : !d ? `${a} done, ${a} wrong` : a === 1 ? '1 of 2' : '2 of 2';
+const expectTime = ({ agents: a, data: d, checks: c }) =>
+  a === 0 || (c && !d) ? '≈ 45 min' : a === 1 ? '≈ 30 min' : '≈ 40 sec';
 const tilesDone = page => page.waitForFunction(() => [...document.querySelectorAll('#tiles .v')].length === 4 && ![...document.querySelectorAll('#tiles .v')].some(v => v.textContent === '–'));
 const tileVals = page => page.$$eval('#tiles .tile', ts => ts.map(t => ({ k: t.querySelector('.k').textContent, v: t.querySelector('.v').textContent, s: t.textContent })));
 async function settle(page, decision = 'ok') {
@@ -69,6 +74,10 @@ await test('story: every step renders and completes', async () => {
     }
   }
   assert(await page.isDisabled('#next'), 'Next should be disabled on the last step');
+  const rows = await page.$$eval('#recap tbody tr', rs => rs.map(r => [...r.querySelectorAll('td .c')].map(c => c.textContent)));
+  const want = [['Guessed', '0 of 2', '≈ 45 min', 'Medium'], ['Guessed', '1 done, 1 wrong', '≈ 30 min', 'High'], ['Guessed', '2 done, 2 wrong', '≈ 40 sec', 'High'],
+    ['Right', '2 of 2', '≈ 40 sec', 'High'], ['Right', '2 of 2', '≈ 40 sec', 'Medium'], ['Right', '2 of 2', '≈ 40 sec', 'Under control']];
+  assert(JSON.stringify(rows) === JSON.stringify(want), 'recap values:\n' + JSON.stringify(rows));
   const heads = await page.$$eval('#recap thead th', t => t.map(x => x.textContent));
   assert(heads.includes('Time to resolve'), 'recap header: ' + heads.join(', '));
   assert(page.errors.length === 0, 'errors: ' + page.errors.join('; '));
@@ -87,6 +96,9 @@ await test('free play: all 24 layer mixes keep their invariants', async () => {
     const facts = t[0].v, risk = t[3].v;
     const wantFacts = data ? 'Right' : checks ? 'Not guessed' : 'Guessed';
     if (facts !== wantFacts) problems.push(`${tag}: facts ${facts} != ${wantFacts}`);
+    if (t[1].v !== expectFixed(c)) problems.push(`${tag}: problems fixed ${t[1].v} != ${expectFixed(c)}`);
+    if (t[2].v !== expectTime(c)) problems.push(`${tag}: time ${t[2].v} != ${expectTime(c)}`);
+    if (t[2].k !== 'Time to resolve') problems.push(`${tag}: time tile label ${t[2].k}`);
     const work = await page.$eval('#work', e => e.innerText);
     const statuses = await page.$$eval('#work .st', s => s.map(x => x.className));
     const gate = /approval needed/i.test(work);
@@ -105,7 +117,18 @@ await test('free play: all 24 layer mixes keep their invariants', async () => {
   await page.context().close();
 });
 
-await test('live checks: rejecting the credit is reflected everywhere', async () => {
+await test('live checks: a rejected credit shows in the work log, email, chat, tile and recap', async () => {
+  const story = await open();
+  for (let i = 0; i < 7; i++) { await story.click('#next'); if (await story.$('#bdesc')) { await story.click('#bdesc'); await story.click('#bcreate'); } }
+  await settle(story, 'no');
+  const reply = await story.$eval('#work', e => [...e.querySelectorAll('.row')].find(r => /^Reply agent/i.test(r.querySelector('.actor')?.textContent || '')).innerText);
+  assert(!/credit €1,500/.test(reply) && /billing will confirm/.test(reply), 'reply email ignores the rejection: ' + reply);
+  const chat = await story.$eval('#chat', e => e.innerText);
+  assert(/credit you stopped/.test(chat), 'assistant summary ignores the rejection');
+  await story.click('#next');
+  const last = await story.$$eval('#recap tbody tr:last-child td .c', c => c.map(x => x.textContent));
+  assert(last[1] === '1 of 2', 'recap ignores the rejection: ' + last.join(' | '));
+  await story.context().close();
   for (const agents of [1, 2]) {
     const page = await open({}, '#free');
     await setFree(page, { agents, data: true, ids: true, checks: true });
@@ -198,6 +221,25 @@ for (const width of [400, 768, 1280]) {
   });
 }
 
+await test('phone: the page uses the device width', async () => {
+  const page = await open({ viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
+  assert((await page.evaluate(() => innerWidth)) === 390, 'innerWidth ' + (await page.evaluate(() => innerWidth)));
+  await page.context().close();
+});
+
+await test('switched-off layers look switched off', async () => {
+  const page = await open();
+  await page.click('#next');
+  const c = await page.evaluate(() => {
+    const muted = getComputedStyle(document.querySelector('.casefile dt')).color;
+    const off = getComputedStyle(document.querySelector('#b-build .band-name')).color;
+    const on = getComputedStyle(document.querySelector('#b-engage .band-name')).color;
+    return { muted, off, on };
+  });
+  assert(c.off === c.muted && c.on !== c.muted, JSON.stringify(c));
+  await page.context().close();
+});
+
 await test('dark theme: page paints its own dark background', async () => {
   const page = await open({ colorScheme: 'dark' });
   const bg = await page.$eval('body', b => getComputedStyle(b).backgroundColor);
@@ -214,7 +256,7 @@ if (process.env.AXE_PATH && fs.existsSync(process.env.AXE_PATH)) {
         if (i) await page.click('#next');
         if (await page.$('#bdesc')) { await page.click('#bdesc'); await page.click('#bcreate'); }
         else if (await page.isVisible('#runview') && await page.$eval('#cfg', e => e.textContent)) await settle(page);
-        for (const view of ['off', 'sap']) {
+        for (const view of ['off', 'tech', 'sap']) {
           await page.click(`[data-view="${view}"]`);
           await page.addScriptTag({ path: process.env.AXE_PATH });
           const res = await page.evaluate(async () => (await window.axe.run(document, { resultTypes: ['violations'] })).violations

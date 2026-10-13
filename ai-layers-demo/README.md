@@ -21,7 +21,9 @@ It is a simulation: no AI model, no network calls, no real systems. Every answer
 
 Open `index.html` in a recent browser (Chrome, Edge, Firefox, Safari). No server or build step. It works offline; without internet the page falls back from Google Fonts to system fonts.
 
-A browser window of 1280 px or wider shows everything side by side; narrower windows stack the panels.
+At 1280 px or wider everything sits side by side. Below about 980 px the layer stack moves above the case; below about 720 px the conversation and the work log stack too.
+
+The file is an HTML fragment without a doctype, because the Artifact publish wraps it in its own document. Opened directly from disk it renders in quirks mode; the tests pass in both modes.
 
 ## Present it
 
@@ -45,7 +47,7 @@ The case data (invoice, contract, delivery note, rules) is in the case file pane
 
 ## Test it
 
-`tests/e2e.mjs` drives the page in Chromium with Playwright. It covers every story step, all 24 layer mixes in free play (invariants such as "discount is denied exactly when agent IDs are on"), approve and reject, the three hood views, keyboard navigation, fast clicking, layout at 400 / 768 / 1280 px, dark theme and, optionally, an axe accessibility audit.
+`tests/e2e.mjs` drives the page in Chromium with Playwright. It covers every story step and the recap values, all 24 layer mixes in free play (expected outcome tiles and invariants such as "discount is denied exactly when agent IDs are on"), approve and reject (work log, email, chat, tile, recap), the three hood views, keyboard navigation, fast clicking, layout at 400 / 768 / 1280 px and on a phone, dark theme and, optionally, an axe accessibility audit.
 
 ```sh
 PLAYWRIGHT_MODULE=$(npm root -g)/playwright/index.mjs node ai-layers-demo/tests/e2e.mjs
@@ -60,4 +62,5 @@ Playwright and axe-core are not repository dependencies; install them globally o
 - The SAP view names are a simplified mapping made for a presentation; check them against current SAP material before using them externally.
 - Company names, people and e-mail addresses are fictional (`.example` domains).
 - The only network request is Google Fonts, which tells Google the viewer's IP address. Remove the `<link>` tags in the head to avoid it.
-- Screen readers get the content, but run updates are not announced live.
+- Run updates are not announced to screen readers (no live region). Screen-reader use has not been tested.
+- Only Chromium is covered by the tests.

@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>One Complaint, Six Ways</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,6 +78,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .band{--lc:var(--muted);border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;display:grid;gap:4px;transition:background .3s,border-color .3s,opacity .3s}
 .band.on{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 6%,var(--surface))}
 .band.off{border-style:dashed;background:var(--bg)}
+.band.off .band-name,.band.off .eyebrow,.gpart.off b{color:var(--muted)}
 .band.engage{--lc:var(--engage)} .band.build{--lc:var(--build)} .band.data{--lc:var(--data)}
 .band-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .band-name{font-weight:700;font-size:15px}
@@ -399,7 +402,7 @@ const PRESETS = [
   ['Everything on', {agents:2,data:true,ids:true,checks:true}],
 ];
 
-const st = { mode:'story', scene:0, seen:new Set([0]), free:{agents:2,data:false,ids:false,checks:false}, hood:false };
+const st = { decisions:{}, mode:'story', scene:0, seen:new Set([0]), free:{agents:2,data:false,ids:false,checks:false}, hood:false };
 
 /* ---------- run script: steps for any mix of layers ---------- */
 const AID = {co:'CO-01', ba:'BA-07', lg:'LG-03', rp:'RP-02'};
@@ -489,7 +492,7 @@ function steps(c){
         'authz: BA-07 scopes = [contract.read, credit_note.create] · pricing.update not granted → 403 · route(account_manager)');
   } else {
     row('build', who('Billing agent','ba'), R('Sets 15% off all future Alpine Foods orders, because the customer asked.') + ' <span class="real">≈ −€37,500 a year</span>', ['done · risky','risk'],
-        'tool: update_price_conditions(customer="Alpine Foods", discount=15%) · allowed by shared admin login' + (C ? ' · live checks cover limits, not who may change prices' : ''));
+        'tool: update_price_conditions(customer="Alpine Foods", discount=15%) · allowed by shared admin login' + (C ? ' · source = customer email · live checks cover amounts and records, not who may change prices' : ''));
   }
 
   // reply to customer
@@ -503,7 +506,7 @@ function steps(c){
       else if (!D) { html = `Email sent: credit ${W('€1,250','€1,500')}, 2 × ${W('BP-200','BP-350')} on the way, ${pricing}.`; status = ['sent · wrong','wrong']; }
       else if (!C || ctx.ok) html = `Email sent: credit €1,500, 2 × BP-350 on the way, ${pricing}.`;
       else html = `Email sent: 2 × BP-350 on the way, billing will confirm the credit, ${pricing}.`;
-      return {t:'row', layer:'build', actor:who('Reply agent','rp'), html, status, tech:'tool: send_email(to="purchasing@alpinefoods.example", template="resolution")' + (C ? ' · live check: amounts match records → pass' : '')};
+      return {t:'row', layer:'build', actor:who('Reply agent','rp'), html, status, tech:'tool: send_email(to="purchasing@alpinefoods.example", template="resolution")' + (C ? (D ? ' · live check: amounts match records → pass' : ' · live check: no amounts or promises in the email → pass') : '')};
     });
   }
 
@@ -521,7 +524,7 @@ function steps(c){
     return {t:'chat', who:'ai', html:`<p>${m}</p>`, tech:'summary of agent results'};
   });
 
-  if (C) out.push((ctx, n) => ({t:'row', layer:'govern', actor:'Audit log', html:`${n} entries saved: ${I ? 'which agent ID' : 'which step'} did what, why, based on which record${D ? ', and who approved' : ''}.`, status:['logged','done'], tech:`audit.write(${n} events: ${I ? 'agent_id, ' : ''}action, record, rule, approver)`}));
+  if (C) out.push((ctx, n) => ({t:'row', layer:'govern', actor:'Audit log', html:`${n} entries saved: ${I ? 'which agent ID' : 'which step'} did what and why${D ? ', based on which record, and who approved' : ', and which rule stopped it'}.`, status:['logged','done'], tech:`audit.write(${n} events: ${I ? 'agent_id, ' : ''}action, record, rule, approver)`}));
   else if (I) row('govern','Agent IDs', 'Each action is signed with an agent ID. There is no full log and no approval step.', ['signed','info'], 'actions attributable via agent identity · no policy runtime, no audit trail');
   return out;
 }
@@ -717,6 +720,7 @@ async function run(){
         el.querySelector('.ok').onclick = () => res(true); el.querySelector('.no').onclick = () => res(false); });
       if (id !== runId) return;
       ctx.ok = decision; logged++;
+      if (st.mode === 'story') st.decisions[st.scene] = decision;
       el.querySelector('.gate').outerHTML = `<div class="gate" style="border-style:solid"><b>${decision ? 'Approved by you' : 'Rejected by you'}</b><span class="hint">Your decision is saved in the log.</span></div>`;
       el.querySelector('.st').className = 'st ' + (decision ? 'done' : 'blocked');
       el.querySelector('.st').textContent = decision ? 'approved' : 'rejected';
@@ -732,18 +736,18 @@ async function run(){
     if (s.t === 'row' && c.checks) logged++;
     if (c.agents === 2) $('#clock').textContent = `${Math.min(41, Math.round((Date.now() - t0) / 90))} s simulated`;
   }
-  if (c.agents === 2) $('#clock').textContent = `${c.data ? 41 : 38} s simulated`;
+  if (c.agents === 2) $('#clock').textContent = c.checks && !c.data ? 'stopped by live checks' : `${c.data ? 41 : 38} s simulated`;
   paintTiles(score(c, ctx.ok));
 }
 
 function paintRecap(){
-  const runs = SCENES.filter(s => s.cfg);
+  const runs = SCENES.map((s, i) => ({...s, ok: st.decisions[i] !== false})).filter(s => s.cfg);
   const layerChips = c => `<div class="layers"><span style="--lc:var(--engage)">Assistant</span>${c.agents ? `<span style="--lc:var(--build)">${c.agents === 2 ? 'Agent team' : 'Agent'}</span>` : ''}${c.data ? '<span style="--lc:var(--data)">Company data</span>' : ''}${c.ids ? '<span style="--lc:var(--govern)">Agent IDs</span>' : ''}${c.checks ? '<span style="--lc:var(--govern)">Live checks</span>' : ''}</div>`;
   const cell = d => `<td class="lv-${d.lv}"><span class="c">${d.v}</span><br><span style="color:var(--muted)">${d.s || (d.list || []).join(' · ')}</span></td>`;
   $('#recap').innerHTML = `
     <div class="tablewrap"><table>
       <thead><tr><th>Run</th><th>Layers on</th><th>Right facts?</th><th>Problems fixed</th><th>Time to resolve</th><th>Risk</th></tr></thead>
-      <tbody>${runs.map((s,i) => { const sc = score(s.cfg); return `<tr><td><b>${i + 1}. ${s.label.replace('+ ','')}</b></td><td>${layerChips(s.cfg)}</td>${cell(sc.facts)}${cell(sc.fixed)}${cell(sc.time)}${cell(sc.risk)}</tr>`; }).join('')}</tbody>
+      <tbody>${runs.map((s,i) => { const sc = score(s.cfg, s.ok); return `<tr><td><b>${i + 1}. ${s.label.replace('+ ','')}</b></td><td>${layerChips(s.cfg)}</td>${cell(sc.facts)}${cell(sc.fixed)}${cell(sc.time)}${cell(sc.risk)}</tr>`; }).join('')}</tbody>
     </table></div>
     <div class="takeaways">
       <div class="take engage"><span class="eyebrow">Engage</span><b>Talk to it</b><p>One place to ask, in plain words. On its own, it only gives advice.</p></div>
