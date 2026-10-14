@@ -81,6 +81,24 @@ header.top{display:flex;gap:12px 20px;align-items:center;justify-content:space-b
 .layercap{margin:10px 0 0;font-size:14.5px;font-weight:600;color:var(--fg)}
 .flow .x .lt,.lt{display:inline-block;font:700 11px var(--mono);color:var(--lon);background:var(--lc);border-radius:4px;padding:0 4px;margin-right:6px;vertical-align:1px}
 
+/* control room (layer 4) */
+.crhd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.crhd h3{font-size:16px;color:var(--l4)}
+.cr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:8px}
+@media (max-width:1000px){.cr{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.cr{grid-template-columns:minmax(0,1fr)}}
+.tile{border:1px solid var(--line);border-top:4px solid var(--l4);border-radius:12px;padding:10px 12px;font-size:13.5px;min-width:0;display:grid;gap:4px;align-content:start}
+.tile h4{margin:0;font:700 14px var(--body)}
+.tile ul{margin:0;padding-left:18px;display:grid;gap:2px}
+.tile .muted{color:var(--mut)}
+.meter{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--l4);transition:width .3s}
+.meter.over i{background:var(--bad)}
+.mrow{display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.tchip{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px;background:var(--human-bg);color:var(--l4);margin:0 4px 4px 0}
+.tile dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:2px 10px;margin:0}
+.tile dt{color:var(--mut)}.tile dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+
 /* now banner */
 .now{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-radius:14px;padding:14px 18px;background:var(--panel);border:1px solid var(--line)}
 .now.loopy{border:2px solid var(--loop);background:var(--loop-bg)}
@@ -195,7 +213,7 @@ textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line)
 .c-cust{--c:var(--cust);--cbg:var(--cust-bg)} .c-triage{--c:var(--triage);--cbg:var(--triage-bg)}
 .c-order{--c:var(--order);--cbg:var(--order-bg)} .c-resol{--c:var(--resol);--cbg:var(--resol-bg)}
 .c-writer{--c:var(--writer);--cbg:var(--writer-bg)} .c-review{--c:var(--loop);--cbg:var(--loop-bg)}
-.c-human{--c:var(--human);--cbg:var(--human-bg)} .c-db{--c:var(--order);--cbg:var(--order-bg)} .c-ai{--c:var(--accent);--cbg:var(--accent-bg)}
+.c-human{--c:var(--human);--cbg:var(--human-bg)} .c-orch{--c:var(--l4);--cbg:var(--human-bg)} .c-db{--c:var(--order);--cbg:var(--order-bg)} .c-ai{--c:var(--accent);--cbg:var(--accent-bg)}
 .note{font-size:13px;color:var(--mut);margin:8px 0 0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -228,6 +246,14 @@ textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line)
     <div class="colhd"><h2>The 4 layers of an agent system</h2><span class="status-chip">Filled = the layer working right now</span></div>
     <div class="layers" id="layers"></div>
     <p class="layercap" id="layerCap">Send a complaint to see which layer is doing the work at each moment.</p>
+    <div class="crhd"><h3>Layer 4 control room: what the orchestrator manages</h3>
+      <div class="seg" role="group" aria-label="Budget policy"><button id="budNormal" aria-pressed="true">Normal budget</button><button id="budTight" aria-pressed="false">Tight budget (forces a policy stop)</button></div></div>
+    <div class="cr">
+      <div class="tile"><h4>Run plan</h4><div id="crPlan"></div></div>
+      <div class="tile"><h4>Budget and monitoring</h4><div id="crBudget"></div></div>
+      <div class="tile"><h4>Shared memory (case file)</h4><div id="crMem"></div></div>
+      <div class="tile"><h4>Audit log and guardrails</h4><div id="crAudit"></div></div>
+    </div>
   </section>
 
   <div class="now" id="now" aria-live="polite">
@@ -279,6 +305,7 @@ const ORDERS = {
   "1005": {id:"1005", customer:"Mia Chen",     product:"Phone case",         keys:["phone case","case","cover"],    price:19,   status:"Delivered 9 Oct (3 days late)", inStock:true},
 };
 const LIMIT = 100, MAX_TRIES = 3;
+const GUARD_EXAMPLE = ["Order 1001: my headphones are broken. I paid with card 4111 1111 1111 1111, email emma@example.com. Refund please.", "Card number + email: the orchestrator hides them"];
 
 const LOOPS = {
   ask: {name:"1 · Ask and retry", short:"Missing information? The agent asks the customer, then searches again.",
@@ -343,9 +370,9 @@ const FLOWS = {
 };
 
 const NAMES = {cust:"Customer", app:"App", ai:"Claude", triage:"Triage Agent", order:"Order Agent", db:"Order database",
-  resol:"Resolution Agent", writer:"Writer Agent", review:"Reviewer Agent", human:"Manager", gate:"Safety rule", person:"A person"};
+  resol:"Resolution Agent", writer:"Writer Agent", review:"Reviewer Agent", human:"Manager", gate:"Safety rule", person:"A person", orch:"Orchestrator", sandbox:"Sandbox"};
 const CLS = {cust:"c-cust", app:"c-ai", ai:"c-ai", triage:"c-triage", order:"c-order", db:"c-db", resol:"c-resol",
-  writer:"c-writer", review:"c-review", human:"c-human", gate:"c-ai", person:"c-human"};
+  writer:"c-writer", review:"c-review", human:"c-human", gate:"c-ai", person:"c-human", orch:"c-orch", sandbox:"c-orch"};
 
 /* ================= helpers ================= */
 const $ = s => document.querySelector(s);
@@ -390,7 +417,7 @@ function selectLoop(k) {
     s.append(b);
   }
   const ch = $("#chips"); ch.innerHTML = ""; ch.append(el("span", {text: "Examples for this loop"}));
-  for (const [t, why] of LOOPS[k].examples) ch.append(el("button", {class: "chip", onclick: () => run(t)}, t, el("em", {text: why})));
+  for (const [t, why] of [...LOOPS[k].examples, GUARD_EXAMPLE]) ch.append(el("button", {class: "chip", onclick: () => run(t)}, t, el("em", {text: why})));
   renderChart(k);
 }
 
@@ -460,6 +487,87 @@ function fBadge(id, text) {
   svg.append(b);
 }
 
+/* ================= orchestrator (layer 4) ================= */
+const TEAMS = {ask: ["Triage", "Order", "Resolution"], check: ["Triage", "Order", "Resolution", "Writer", "Reviewer"],
+  human: ["Triage", "Order", "Resolution", "Manager"], tool: ["Triage", "Order", "Resolution"]};
+const BUDGETS = {normal: {step: 12, tool: 8}, tight: {step: 4, tool: 2}};
+const AGENT_KEYS = new Set(["triage", "order", "resol", "writer", "review"]);
+let budgetMode = "normal";
+let ORCH = freshOrch();
+function freshOrch() { return {used: {step: 0, tool: 0}, loops: 0, events: 0, audit: [], mem: {}, guard: [], active: "-", order: null}; }
+function mem(obj) { Object.assign(ORCH.mem, obj); renderCR(); }
+function renderCR() {
+  const B = BUDGETS[budgetMode];
+  const plan = $("#crPlan"); plan.innerHTML = "";
+  plan.append(el("div", {}, TEAMS[loop].map(t => el("span", {class: "tchip", text: t}))),
+    el("ul", {}, el("li", {text: `Stop rule: max ${MAX_TRIES} tries per loop`}), el("li", {text: `Over ${eur(LIMIT)}: manager approves`}),
+      el("li", {text: `Budget: ${B.step} agent steps, ${B.tool} tool calls`}), el("li", {text: "Hide card numbers and emails"}),
+      el("li", {text: "Money actions run in a sandbox first"})));
+  const bud = $("#crBudget"); bud.innerHTML = "";
+  for (const [k, label] of [["step", "Agent steps"], ["tool", "Tool calls"]]) {
+    const u = ORCH.used[k], max = B[k], over = u > max;
+    bud.append(el("div", {class: "mrow"}, el("span", {text: label}), el("b", {text: `${u} / ${max}`})),
+      el("div", {class: "meter" + (over ? " over" : "")}, el("i", {style: `width:${Math.min(100, u / max * 100)}%`})));
+  }
+  bud.append(el("div", {class: "mrow"}, el("span", {text: "Loops so far"}), el("b", {text: ORCH.loops})),
+    el("div", {class: "mrow"}, el("span", {text: "Working now"}), el("b", {text: ORCH.active})),
+    el("div", {class: "mrow"}, el("span", {text: "Events logged"}), el("b", {text: ORCH.events})));
+  const m = $("#crMem"); m.innerHTML = "";
+  const keys = Object.entries(ORCH.mem);
+  m.append(keys.length ? el("dl", {}, keys.flatMap(([k, v]) => [el("dt", {text: k}), el("dd", {text: v})])) : el("span", {class: "muted", text: "Empty until a run starts. Every agent reads and writes here."}));
+  const a = $("#crAudit"); a.innerHTML = "";
+  a.append(el("div", {class: "mrow"}, el("span", {text: "Layer 4 events"}), el("b", {text: ORCH.audit.length})));
+  if (ORCH.guard.length) a.append(el("div", {class: "result ok", style: "font-size:13px;padding:4px 8px", text: "Guardrail: " + ORCH.guard.join(", ") + " hidden"}));
+  const last = ORCH.audit.slice(-4);
+  a.append(last.length ? el("ul", {}, last.map(t => el("li", {text: t}))) : el("span", {class: "muted", text: "Every decision the orchestrator makes is recorded here."}));
+}
+function setBudget(m) { budgetMode = m; $("#budNormal").setAttribute("aria-pressed", m === "normal"); $("#budTight").setAttribute("aria-pressed", m === "tight"); renderCR(); }
+$("#budNormal").onclick = () => setBudget("normal");
+$("#budTight").onclick = () => setBudget("tight");
+class PolicyStop { constructor(reason) { this.reason = reason; } }
+function useBudget(kind) {
+  ORCH.used[kind]++; renderCR();
+  const max = BUDGETS[budgetMode][kind];
+  if (ORCH.used[kind] > max) throw new PolicyStop(`Budget policy: ${ORCH.used[kind]} ${kind === "step" ? "agent steps" : "tool calls"} would exceed the limit of ${max}.`);
+}
+function redact(text) {
+  const found = [];
+  let clean = text.replace(/\b(?:\d[ -]?){12,18}\d\b/g, () => { found.push("card number"); return "[card number hidden]"; });
+  clean = clean.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, () => { found.push("email"); return "[email hidden]"; });
+  return {clean, found};
+}
+function dispatch(key) {
+  ORCH.active = NAMES[key];
+  hop("orch", key, "dispatches", `rules checked · budget ${ORCH.used.step}/${BUDGETS[budgetMode].step} steps, ${ORCH.used.tool}/${BUDGETS[budgetMode].tool} tool calls`);
+  renderCR();
+}
+async function orchestratorPlan(text) {
+  now("The Orchestrator is planning the run.", "Layer 4: it picks the team, sets the rules and protects private data before any agent starts.");
+  const c = card("orch", "Orchestrator (meta-harness)", "Runs the whole team: plans, dispatches agents, enforces rules, keeps the case file.");
+  await sleep(700);
+  const {clean, found} = redact(text);
+  ORCH.guard = found;
+  c.done("plan ready");
+  c.kv([["Team", TEAMS[loop].join(", ")], ["Rules", `max ${MAX_TRIES} tries · over ${eur(LIMIT)} → manager · ${BUDGETS[budgetMode].step} agent steps, ${BUDGETS[budgetMode].tool} tool calls`], ["Sandbox", "money actions are simulated before they are committed"]]);
+  c.decide(found.length ? `Guardrail: hid ${found.join(" and ")} before sharing the message with the agents.` : "Guardrail: no private data found in the message.");
+  hop("orch", null, "plans the run", `team: ${TEAMS[loop].join(", ")}${found.length ? " · hid " + found.join(", ") : ""}`);
+  mem({Complaint: clean.length > 70 ? clean.slice(0, 70) + "..." : clean});
+  return clean;
+}
+async function sandboxRun(res, o) {
+  if (!res.amount) return;
+  const c = card("orch", "Orchestrator: sandbox", `Runs the ${res.decision} in a safe copy first, checks it, then commits it for real.`);
+  hop("orch", "sandbox", "test run", `${res.decision} ${eur(res.amount)} for order ${o.id}`);
+  c.status("Simulating the payment in the sandbox...");
+  await sleep(900);
+  hop("sandbox", "orch", "test passed", "amount, order and customer all match");
+  c.tool(`sandbox: ${res.decision}(order=${o.id}, amount=${res.amount}) → OK\ncheck: amount ≤ price, order not refunded before → OK`);
+  c.done("committed");
+  c.decide(`Test passed, so the ${res.decision} of ${eur(res.amount)} is committed.`);
+  hop("orch", null, "commits the action", `${res.decision} ${eur(res.amount)}`);
+  mem({Action: `${res.decision} ${eur(res.amount)} committed`});
+}
+
 /* ================= clock + timeline ================= */
 let worked = 0, runStart = null, ticker = null;
 const clockStart = () => { runStart = performance.now(); };
@@ -486,6 +594,7 @@ function resetLayers() {
 }
 function layerOf(from, to, extra) {
   if (extra.includes("pause")) return 2;
+  if (["orch", "sandbox"].includes(from) || ["orch", "sandbox"].includes(to)) return 4;
   if (from === "db" || to === "db") return 3;
   if (from === "ai" || to === "ai") return 1;
   if (from === "gate" || from === "human" || to === "human") return 3;
@@ -494,6 +603,7 @@ function layerOf(from, to, extra) {
 }
 function hop(from, to, label, detail, extra = "") {
   const L = layerOf(from, to, extra);
+  ORCH.events++; if (L === 4) ORCH.audit.push(`${to ? NAMES[from] + " → " + NAMES[to] : NAMES[from]} ${label}`);
   setLayer(L, `${to ? NAMES[from] + " → " + NAMES[to] : NAMES[from]} ${label}`);
   flow.append(el("li", {class: (CLS[from] || "c-ai") + (extra ? " " + extra : "")},
     el("span", {class: "t", text: secs().toFixed(1) + "s"}), el("span", {class: "d"}),
@@ -519,6 +629,8 @@ async function waitNext(fromKey, toKey, payload, isLoop = false, tryText = "") {
   const btn = $("#nextBtn"); btn.disabled = false; btn.focus({preventScroll: true});
   await waitFor(res => { nextResolve = () => { nextResolve = null; btn.disabled = true; res(); }; });
   card.classList.add("passed"); $("#now").classList.remove("loopy"); clockStart();
+  if (isLoop) ORCH.loops++;
+  if (AGENT_KEYS.has(toKey)) dispatch(toKey); else renderCR();
 }
 $("#nextBtn").onclick = () => nextResolve && nextResolve();
 document.addEventListener("keydown", e => {
@@ -601,6 +713,7 @@ function triageOffline(text) {
           summary: `Customer reports a ${issue.replace("_", " ")} problem${m ? " on order " + m[1] : ""}.`};
 }
 async function triageAgent(text) {
+  useBudget("step");
   now("Triage Agent is reading the complaint.", "Its job: understand what went wrong and what the customer wants.");
   const c = card("triage", "Triage Agent", "Reads the message and turns it into facts the other agents can use.");
   const prompt = `You are the Triage Agent of an online shop's support team.
@@ -633,6 +746,7 @@ async function callDatabase(c) {
   for (let attempt = 1; ; attempt++) {
     c.status(`Calling the database (try ${attempt} of ${MAX_TRIES})...`);
     await sleep(700);
+    useBudget("tool");
     hop("order", "db", "tool call", `get_orders() · try ${attempt}`);
     if (!dbFails(attempt)) { if (attempt > 1) c.tool(`try ${attempt}: database answered ✓`); fGo("o", "db"); return true; }
     await sleep(500);
@@ -660,6 +774,7 @@ async function orderAgent(tri) {
   for (let attempt = 1; ; attempt++) {
     c.status(`Searching orders (try ${attempt} of ${MAX_TRIES})...`);
     await sleep(600);
+    useBudget("tool");
     const res = findOrder(tri);
     hop("order", "db", "search", res.how);
     await sleep(400);
@@ -736,6 +851,7 @@ function resolutionOffline(tri, o, comment) {
   return {decision, pct, reason};
 }
 async function resolutionAgent(tri, o, comment = "") {
+  useBudget("step");
   now(comment ? "Resolution Agent is rethinking with the manager's comment." : "Resolution Agent is deciding what to do.", "It applies the shop policy: refund, replace, voucher or no.");
   const c = card("resol", "Resolution Agent", comment ? `Decides again, using the manager's comment: "${comment}"` : "Applies the shop policy to decide the outcome.");
   const prompt = `You are the Resolution Agent of an online shop's support team.
@@ -765,6 +881,7 @@ const WEAK = [
 ];
 function weakDraft(attempt) { return loop === "check" && (sw.check === "always" || (sw.check === "once" && attempt === 1)); }
 async function writerAgent(tri, o, res, attempt, feedback) {
+  useBudget("step");
   now(attempt === 1 ? "Writer Agent is drafting the reply." : "Writer Agent is rewriting, using the reviewer's notes.", `Draft ${attempt} of ${MAX_TRIES}.`);
   const c = card("writer", "Writer Agent", attempt === 1 ? "Writes a short, friendly reply to the customer." : "Rewrites the reply to fix: " + feedback.join(", ") + ".");
   let draft, live = false;
@@ -795,6 +912,7 @@ function reviewDraft(draft, o, res) {
   ];
 }
 async function reviewerAgent(draft, o, res, attempt) {
+  useBudget("step");
   now("Reviewer Agent is checking the draft.", "It uses a checklist. If anything fails, the draft goes back to the writer.");
   const c = card("review", "Reviewer Agent", "Checks the draft against the shop's reply checklist before anything is sent.");
   await sleep(900);
@@ -857,6 +975,7 @@ async function safetyGate(res, o, round = 1) {
 
 /* ================= main run ================= */
 function finish(reply, outcome, endNode = "end") {
+  ORCH.active = "finished"; renderCR();
   fNode(endNode, "done"); activeNode = null;
   say("bot", reply); hop("app", "cust", "sends the reply", reply);
   clockStop(); clearInterval(ticker); $("#clock").textContent = secs().toFixed(1) + " s";
@@ -882,18 +1001,23 @@ async function run(text) {
   worked = 0; clockStart(); startTicker();
   say("me", text);
   fNode("c", "active");
-  hop("cust", "app", "sends a complaint", `"${text.length > 90 ? text.slice(0, 90) + "..." : text}"`);
+  hop("cust", "orch", "sends a complaint", `"${text.length > 90 ? text.slice(0, 90) + "..." : text}"`);
   try {
+    const clean = await orchestratorPlan(text);
+    await waitNext("orch", "triage", "the case file (private data hidden) and the run rules");
     const combined = loop === "check" || loop === "human";
     fGo("c", combined ? "to" : "t");
-    const tri = await triageAgent(text);
+    const tri = await triageAgent(clean);
+    mem({Problem: tri.issue.replace("_", " "), Wants: tri.wants, "Order no.": tri.order_id || "unknown"});
     await waitNext("triage", "order", `problem = ${tri.issue.replace("_", " ")}, wants = ${tri.wants}, order = ${tri.order_id || "unknown"}`);
     if (!combined) fGo("t", "o");
     const o = await orderAgent(tri);
+    if (o) { ORCH.order = o; mem({"Order no.": o.id, Product: o.product, Price: eur(o.price)}); }
     if (!o) return await handToPerson(null, `Stop rule: the Order Agent failed ${MAX_TRIES} times.`, "person");
     await waitNext("order", "resol", `order ${o.id} · ${o.product} · ${eur(o.price)}`);
     if (loop === "ask") fGo("found", "r"); else if (loop === "tool") fGo("db", "r"); else fGo("to", "r");
     let res = await resolutionAgent(tri, o);
+    mem({Decision: `${res.decision} ${eur(res.amount)}`});
     let reply = res.reply;
 
     if (loop === "check") {
@@ -902,6 +1026,7 @@ async function run(text) {
       let feedback = [];
       for (let attempt = 1; ; attempt++) {
         const draft = await writerAgent(tri, o, res, attempt, feedback);
+        mem({Drafts: String(attempt)});
         await waitNext("writer", "review", "draft " + attempt);
         fGo("w", "rev");
         feedback = await reviewerAgent(draft, o, res, attempt);
@@ -931,11 +1056,14 @@ async function run(text) {
         fGo("tries", "back");
         await waitNext("human", "resol", `manager's comment: "${g.comment}"`, true, `try ${round + 1} of ${MAX_TRIES} next`);
         fGo("back", "r");
+        mem({Manager: `rejected: ${g.comment}`});
         res = await resolutionAgent(tri, o, g.comment);
+        mem({Decision: `${res.decision} ${eur(res.amount)}`});
         await waitNext("resol", "gate", `${res.decision} · ${eur(res.amount)}`);
         fGo("r", "over");
       }
-      await waitNext("gate", "cust", "the approved reply");
+      await sandboxRun(res, o);
+      await waitNext("orch", "cust", "the approved reply");
       return finish(reply, `Outcome: ${res.decision} ${eur(res.amount)}`);
     } else {
       await waitNext("resol", "gate", `${res.decision} · ${eur(res.amount)}`);
@@ -945,11 +1073,19 @@ async function run(text) {
     fGo(loop === "check" ? "ok" : "r", "safe");
     const g = await safetyGate(res, o);
     if (!g.ok) reply = HOLD(o);
-    await waitNext(g.by === "manager" ? "human" : "gate", "cust", g.ok ? "the approved reply" : "a holding reply (manager rejected)");
+    if (g.ok) await sandboxRun(res, o);
+    await waitNext(g.ok ? "orch" : "human", "cust", g.ok ? "the approved reply" : "a holding reply (manager rejected)");
     fGo("safe", "end");
     finish(reply, g.ok ? `Outcome: ${res.decision === "reject" ? "no refund" : res.decision + " " + eur(res.amount)} (${g.by})` : "Outcome: manager rejected, a person follows up");
   } catch (e) {
-    if (e !== STOP) { console.error(e); now("Something went wrong.", String(e?.message || e)); }
+    if (e instanceof PolicyStop && tok === CUR) {
+      try {
+        const c = card("orch", "Orchestrator: policy stop", e.reason);
+        c.done("stopped"); c.decide("The meta-harness overrides the agents: no more steps are allowed on this case.");
+        hop("orch", null, "policy stop", e.reason);
+        await handToPerson(ORCH.order, e.reason + " A person takes over.", "person");
+      } catch (e2) { if (e2 !== STOP) console.error(e2); }
+    } else if (e !== STOP) { console.error(e); now("Something went wrong.", String(e?.message || e)); }
   } finally {
     if (tok === CUR) $("#sendBtn").disabled = false;
   }
@@ -961,6 +1097,7 @@ function reset(keepChart) {
   nextResolve = null; clockStop(); clearInterval(ticker); worked = 0; activeNode = null;
   $("#clock").textContent = "0.0 s"; $("#nextBtn").disabled = true; $("#sendBtn").disabled = false;
   $("#chat").innerHTML = ""; flow.innerHTML = ""; $("#now").classList.remove("loopy"); resetLayers();
+  ORCH = freshOrch(); renderCR();
   $("#work").innerHTML = "";
   $("#work").append(el("div", {class: "empty"}, el("p", {style: "margin:0", text: `Loop: ${LOOPS[loop].name}. ${LOOPS[loop].short}`}),
     el("ol", {}, el("li", {text: "Use the switch above to decide whether the loop happens."}),
