@@ -1,0 +1,37 @@
+<section id="layers" data-transition="fade" style="background:#f6f7fa;color:#16202c;font-family:'Figtree', Arial, sans-serif;padding:80px 128px 80px;display:flex;flex-direction:column;gap:26px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:26px;font-weight:700;color:#2f5bd8;letter-spacing:3px;text-transform:uppercase">The big picture</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#16202c">4 layers of an agent system</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;background:#ffffff;border:2px solid #dce2ea;border-radius:16px;overflow:hidden">
+<div style="width:300px;display:flex;flex-direction:column;justify-content:center;gap:2px;background:#2f5bd8;padding:22px 28px"><p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:700;color:#ffffff">1 · Loop</p></div>
+<div style="flex:1;display:flex;gap:28px;padding:22px 28px;align-items:center">
+<p style="flex:1;font-size:26px;line-height:1.35">One agent understands, reasons, acts and checks, until its goal is reached.</p>
+<p style="flex:1;font-size:26px;line-height:1.35;color:#4a5668"><b style="color:#2f5bd8">In the demo:</b> each agent card, e.g. Triage reasoning with Claude.</p>
+</div>
+</div>
+<div style="display:flex;background:#ffffff;border:2px solid #dce2ea;border-radius:16px;overflow:hidden">
+<div style="width:300px;display:flex;flex-direction:column;justify-content:center;gap:2px;background:#7b4fd6;padding:22px 28px"><p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:700;color:#ffffff">2 · Graph</p></div>
+<div style="flex:1;display:flex;gap:28px;padding:22px 28px;align-items:center">
+<p style="flex:1;font-size:26px;line-height:1.35">Steps joined by conditions, branches and loop-backs, sharing what they know.</p>
+<p style="flex:1;font-size:26px;line-height:1.35;color:#4a5668"><b style="color:#7b4fd6">In the demo:</b> the flowchart. Diamonds decide, dashed arrows go back.</p>
+</div>
+</div>
+<div style="display:flex;background:#ffffff;border:2px solid #dce2ea;border-radius:16px;overflow:hidden">
+<div style="width:300px;display:flex;flex-direction:column;justify-content:center;gap:2px;background:#13804f;padding:22px 28px"><p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:700;color:#ffffff">3 · Harness</p></div>
+<div style="flex:1;display:flex;gap:28px;padding:22px 28px;align-items:center">
+<p style="flex:1;font-size:26px;line-height:1.35">What agents can use: tools, context, permissions and traces.</p>
+<p style="flex:1;font-size:26px;line-height:1.35;color:#4a5668"><b style="color:#13804f">In the demo:</b> order database, shop policy, the €100 rule, the timeline.</p>
+</div>
+</div>
+<div style="display:flex;background:#ffffff;border:2px solid #dce2ea;border-radius:16px;overflow:hidden">
+<div style="width:300px;display:flex;flex-direction:column;justify-content:center;gap:2px;background:#b4530f;padding:22px 28px"><p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:40px;font-weight:700;color:#ffffff">4 · Meta-harness</p></div>
+<div style="flex:1;display:flex;gap:28px;padding:22px 28px;align-items:center">
+<p style="flex:1;font-size:26px;line-height:1.35">Runs the whole team and enforces policy, safety and monitoring.</p>
+<p style="flex:1;font-size:26px;line-height:1.35;color:#4a5668"><b style="color:#b4530f">In the demo:</b> the app runs the agents; the stop rule hands over after 3 tries.</p>
+</div>
+</div>
+</div>
+<aside>This is the map for the rest of the talk. Each layer builds on the one below. Layer 1 is a single agent running its own small loop. Layer 2 connects several steps into a graph with conditions and loop-backs. Layer 3, the harness, is what the system gives the agents: tools, data, permissions and logs. Layer 4, the meta-harness, sits on top: it orchestrates the agents and enforces the rules. Our support demo touches all four, and the layer strip in the app lights up whichever layer is working.</aside>
+</section>

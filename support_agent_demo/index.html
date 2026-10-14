@@ -15,6 +15,7 @@
   --human:#c26a00; --human-bg:#fdf0dc;
   --cust:#47566a; --cust-bg:#e9edf2;
   --ok:#1c8a4a; --ok-bg:#e2f4e9; --bad:#b8322a; --bad-bg:#fbe6e4;
+  --l1:#2f5bd8; --l2:#7b4fd6; --l3:#13804f; --l4:#b4530f; --lon:#ffffff;
   --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --body:"Figtree",ui-sans-serif,system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
@@ -25,6 +26,7 @@
   --triage:#b394ff; --triage-bg:#2a2140; --order:#6bb6f5; --order-bg:#152c40;
   --resol:#4fd1bc; --resol-bg:#10322d; --writer:#f08bbd; --writer-bg:#3a1a2b; --human:#f5b04f; --human-bg:#3a2a12;
   --cust:#a9b6c6; --cust-bg:#222c38; --ok:#5fd394; --ok-bg:#14301f; --bad:#ff8a80; --bad-bg:#3a1815;
+  --l1:#7aa2ff; --l2:#b394ff; --l3:#5fd394; --l4:#f5a05a; --lon:#0e141b;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e141b; --panel:#161e28; --sunk:#111821; --fg:#e7edf4; --mut:#98a6b6; --line:#263241; --edge:#3a4757;
@@ -32,6 +34,7 @@
   --triage:#b394ff; --triage-bg:#2a2140; --order:#6bb6f5; --order-bg:#152c40;
   --resol:#4fd1bc; --resol-bg:#10322d; --writer:#f08bbd; --writer-bg:#3a1a2b; --human:#f5b04f; --human-bg:#3a2a12;
   --cust:#a9b6c6; --cust-bg:#222c38; --ok:#5fd394; --ok-bg:#14301f; --bad:#ff8a80; --bad-bg:#3a1815;
+  --l1:#7aa2ff; --l2:#b394ff; --l3:#5fd394; --l4:#f5a05a; --lon:#0e141b;
   color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -63,6 +66,20 @@ header.top{display:flex;gap:12px 20px;align-items:center;justify-content:space-b
 .scen{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;padding:12px 16px}
 .scen .lbl{font-weight:700;font-size:14px}
 .stoprule{margin-left:auto;font-size:14px;font-weight:600;color:var(--human);background:var(--human-bg);padding:5px 12px;border-radius:20px}
+
+/* layer strip */
+.layers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.layers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lay{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);display:grid;gap:2px;min-width:0;transition:background .25s,border-color .25s}
+.lay b{font-family:var(--display);font-size:17px;color:var(--lc)}
+.lay span{font-size:13px;color:var(--mut);line-height:1.35}
+.lay .ev{font-weight:600;color:var(--fg);overflow-wrap:anywhere}
+.lay.seen{border-color:var(--lc)}
+.lay.on{background:var(--lc);border-color:var(--lc)}
+.lay.on b,.lay.on span,.lay.on .ev{color:var(--lon)}
+.L1{--lc:var(--l1)}.L2{--lc:var(--l2)}.L3{--lc:var(--l3)}.L4{--lc:var(--l4)}
+.layercap{margin:10px 0 0;font-size:14.5px;font-weight:600;color:var(--fg)}
+.flow .x .lt,.lt{display:inline-block;font:700 11px var(--mono);color:var(--lon);background:var(--lc);border-radius:4px;padding:0 4px;margin-right:6px;vertical-align:1px}
 
 /* now banner */
 .now{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-radius:14px;padding:14px 18px;background:var(--panel);border:1px solid var(--line)}
@@ -172,7 +189,7 @@ textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line)
 .flow .t{font-family:var(--mono);font-size:12px;color:var(--mut);text-align:right;padding-top:1px;font-variant-numeric:tabular-nums}
 .flow .d{width:14px;height:14px;border-radius:50%;background:var(--c);margin-top:3px;position:relative;z-index:1;box-shadow:0 0 0 3px var(--panel)}
 .flow .x{font-size:14px;min-width:0}
-.flow .x span{display:block;color:var(--mut);font-size:13px;overflow-wrap:anywhere}
+.flow .x span:not(.lt){display:block;color:var(--mut);font-size:13px;overflow-wrap:anywhere}
 .flow li.pause .d{background:var(--panel);border:2px dashed var(--accent)}
 .flow li.loopy .d{background:var(--loop)}
 .c-cust{--c:var(--cust);--cbg:var(--cust-bg)} .c-triage{--c:var(--triage);--cbg:var(--triage-bg)}
@@ -186,8 +203,8 @@ textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line)
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Support Agent Team: loops</h1>
-      <p class="sub">Pick a loop, send a complaint, and watch the agents go back and try again when something isn't right.</p>
+      <h1>Support Agent Team: loops and layers</h1>
+      <p class="sub">Pick a loop, send a complaint, and watch the agents go back and try again. The layer strip shows which of the 4 layers is working.</p>
     </div>
     <div class="controls">
       <span class="status-chip" id="aiStatus">AI: <b>checking...</b></span>
@@ -205,6 +222,12 @@ textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line)
     <span class="lbl">Make it happen:</span>
     <div class="seg" id="switch" role="group" aria-label="Scenario switch"></div>
     <span class="stoprule">Stop rule: max 3 tries, then a person takes over</span>
+  </section>
+
+  <section class="panel" aria-label="Agent system layers">
+    <div class="colhd"><h2>The 4 layers of an agent system</h2><span class="status-chip">Filled = the layer working right now</span></div>
+    <div class="layers" id="layers"></div>
+    <p class="layercap" id="layerCap">Send a complaint to see which layer is doing the work at each moment.</p>
   </section>
 
   <div class="now" id="now" aria-live="polite">
@@ -444,10 +467,37 @@ const clockStop = () => { if (runStart != null) { worked += performance.now() - 
 const secs = () => (worked + (runStart != null ? performance.now() - runStart : 0)) / 1000;
 function startTicker() { clearInterval(ticker); ticker = setInterval(() => { $("#clock").textContent = secs().toFixed(1) + " s"; }, 100); }
 const flow = $("#flow");
+const LAYERS = [
+  [1, "Loop", "One agent thinks and acts", "Layer 1 · Loop: an agent is understanding, reasoning with Claude, acting or checking its result."],
+  [2, "Graph", "Steps, conditions, loop-backs", "Layer 2 · Graph: work moves along the flowchart: a hand-off, a condition, or a loop back."],
+  [3, "Harness", "Tools, data, permissions, traces", "Layer 3 · Harness: the agent uses what the system gives it: a tool (the database), data, or a permission check (the €100 rule)."],
+  [4, "Meta-harness", "Orchestrator and policies", "Layer 4 · Meta-harness: the orchestrator runs the team and enforces policies such as the stop rule."],
+];
+for (const [n, name, what] of LAYERS) $("#layers").append(el("div", {class: `lay L${n}`, "data-l": n},
+  el("b", {text: `${n} · ${name}`}), el("span", {text: what}), el("span", {class: "ev", text: "-"})));
+function setLayer(n, msg) {
+  document.querySelectorAll(".lay").forEach(c => c.classList.toggle("on", +c.dataset.l === n));
+  const c = document.querySelector(`.lay[data-l="${n}"]`); c.classList.add("seen"); c.querySelector(".ev").textContent = "Now: " + msg;
+  $("#layerCap").textContent = LAYERS[n - 1][3];
+}
+function resetLayers() {
+  document.querySelectorAll(".lay").forEach(c => { c.classList.remove("on", "seen"); c.querySelector(".ev").textContent = "-"; });
+  $("#layerCap").textContent = "Send a complaint to see which layer is doing the work at each moment.";
+}
+function layerOf(from, to, extra) {
+  if (extra.includes("pause")) return 2;
+  if (from === "db" || to === "db") return 3;
+  if (from === "ai" || to === "ai") return 1;
+  if (from === "gate" || from === "human" || to === "human") return 3;
+  if (from === "person" || to === "person" || from === "app" || to === "app") return 4;
+  return 1;
+}
 function hop(from, to, label, detail, extra = "") {
+  const L = layerOf(from, to, extra);
+  setLayer(L, `${to ? NAMES[from] + " → " + NAMES[to] : NAMES[from]} ${label}`);
   flow.append(el("li", {class: (CLS[from] || "c-ai") + (extra ? " " + extra : "")},
     el("span", {class: "t", text: secs().toFixed(1) + "s"}), el("span", {class: "d"}),
-    el("span", {class: "x"}, el("b", {text: to ? `${NAMES[from]} → ${NAMES[to]}` : NAMES[from]}), " ", label, detail ? el("span", {text: detail}) : null)));
+    el("span", {class: "x"}, el("span", {class: `lt L${L}`, text: "L" + L}), el("b", {text: to ? `${NAMES[from]} → ${NAMES[to]}` : NAMES[from]}), " ", label, detail ? el("span", {text: detail}) : null)));
 }
 $("#tabChart").onclick = () => { $("#chart").hidden = false; $(".flegend").hidden = false; flow.hidden = true; $("#tabChart").setAttribute("aria-pressed", true); $("#tabTime").setAttribute("aria-pressed", false); };
 $("#tabTime").onclick = () => { $("#chart").hidden = true; $(".flegend").hidden = true; flow.hidden = false; $("#tabChart").setAttribute("aria-pressed", false); $("#tabTime").setAttribute("aria-pressed", true); };
@@ -910,7 +960,7 @@ function reset(keepChart) {
   CUR = {}; pendingRejects.splice(0).forEach(rej => rej(STOP));
   nextResolve = null; clockStop(); clearInterval(ticker); worked = 0; activeNode = null;
   $("#clock").textContent = "0.0 s"; $("#nextBtn").disabled = true; $("#sendBtn").disabled = false;
-  $("#chat").innerHTML = ""; flow.innerHTML = ""; $("#now").classList.remove("loopy");
+  $("#chat").innerHTML = ""; flow.innerHTML = ""; $("#now").classList.remove("loopy"); resetLayers();
   $("#work").innerHTML = "";
   $("#work").append(el("div", {class: "empty"}, el("p", {style: "margin:0", text: `Loop: ${LOOPS[loop].name}. ${LOOPS[loop].short}`}),
     el("ol", {}, el("li", {text: "Use the switch above to decide whether the loop happens."}),
