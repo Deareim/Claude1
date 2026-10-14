@@ -82,7 +82,16 @@ header.top{display:flex;gap:12px 20px;align-items:center;justify-content:space-b
 .flow .x .lt,.lt{display:inline-block;font:700 11px var(--mono);color:var(--lon);background:var(--lc);border-radius:4px;padding:0 4px;margin-right:6px;vertical-align:1px}
 
 /* control room (layer 4) */
-.crhd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.crbox{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--l4);border-radius:12px;padding:0 12px}
+.crbox summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:10px 0}
+.crbox summary::-webkit-details-marker{display:none}
+.crsum-t{font:700 15px var(--display);color:var(--l4)}
+.crsum{font-size:13.5px;color:var(--mut);font-variant-numeric:tabular-nums;flex:1;min-width:0}
+.crtoggle{font-size:13px;font-weight:700;color:var(--accent)}
+.crtoggle::after{content:"Show details ▾"}
+.crbox[open] .crtoggle::after{content:"Hide details ▴"}
+.crbox[open]{padding-bottom:12px}
+.crhd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
 .crhd h3{font-size:16px;color:var(--l4)}
 .cr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:8px}
 @media (max-width:1000px){.cr{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -246,7 +255,9 @@ textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line)
     <div class="colhd"><h2>The 4 layers of an agent system</h2><span class="status-chip">Filled = the layer working right now</span></div>
     <div class="layers" id="layers"></div>
     <p class="layercap" id="layerCap">Send a complaint to see which layer is doing the work at each moment.</p>
-    <div class="crhd"><h3>Layer 4 control room: what the orchestrator manages</h3>
+    <details class="crbox" id="crBox">
+    <summary><span class="crsum-t">Layer 4 control room</span><span class="crsum" id="crSum"></span><span class="crtoggle"></span></summary>
+    <div class="crhd"><span class="status-chip">What the orchestrator manages: plan, budget, shared memory, audit</span>
       <div class="seg" role="group" aria-label="Budget policy"><button id="budNormal" aria-pressed="true">Normal budget</button><button id="budTight" aria-pressed="false">Tight budget (forces a policy stop)</button></div></div>
     <div class="cr">
       <div class="tile"><h4>Run plan</h4><div id="crPlan"></div></div>
@@ -254,6 +265,7 @@ textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line)
       <div class="tile"><h4>Shared memory (case file)</h4><div id="crMem"></div></div>
       <div class="tile"><h4>Audit log and guardrails</h4><div id="crAudit"></div></div>
     </div>
+    </details>
   </section>
 
   <div class="now" id="now" aria-live="polite">
@@ -498,6 +510,10 @@ function freshOrch() { return {used: {step: 0, tool: 0}, loops: 0, events: 0, au
 function mem(obj) { Object.assign(ORCH.mem, obj); renderCR(); }
 function renderCR() {
   const B = BUDGETS[budgetMode];
+  const parts = [`Agent steps ${ORCH.used.step}/${B.step}`, `Tool calls ${ORCH.used.tool}/${B.tool}`, `Loops ${ORCH.loops}`, `Working now: ${ORCH.active}`];
+  if (ORCH.guard.length) parts.push("Guardrail: " + ORCH.guard.join(", ") + " hidden");
+  if (budgetMode === "tight") parts.push("Tight budget");
+  $("#crSum").textContent = parts.join(" · ");
   const plan = $("#crPlan"); plan.innerHTML = "";
   plan.append(el("div", {}, TEAMS[loop].map(t => el("span", {class: "tchip", text: t}))),
     el("ul", {}, el("li", {text: `Stop rule: max ${MAX_TRIES} tries per loop`}), el("li", {text: `Over ${eur(LIMIT)}: manager approves`}),
@@ -523,6 +539,8 @@ function renderCR() {
 }
 function setBudget(m) { budgetMode = m; $("#budNormal").setAttribute("aria-pressed", m === "normal"); $("#budTight").setAttribute("aria-pressed", m === "tight"); renderCR(); }
 $("#budNormal").onclick = () => setBudget("normal");
+try { if (localStorage.getItem("crOpen") === "1") $("#crBox").open = true; } catch {}
+$("#crBox").addEventListener("toggle", () => { try { localStorage.setItem("crOpen", $("#crBox").open ? "1" : "0"); } catch {} });
 $("#budTight").onclick = () => setBudget("tight");
 class PolicyStop { constructor(reason) { this.reason = reason; } }
 function useBudget(kind) {
@@ -1080,6 +1098,7 @@ async function run(text) {
   } catch (e) {
     if (e instanceof PolicyStop && tok === CUR) {
       try {
+        $("#crBox").open = true;
         const c = card("orch", "Orchestrator: policy stop", e.reason);
         c.done("stopped"); c.decide("The meta-harness overrides the agents: no more steps are allowed on this case.");
         hop("orch", null, "policy stop", e.reason);
