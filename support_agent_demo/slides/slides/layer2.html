@@ -1,0 +1,33 @@
+<section id="layer2" data-transition="fade" style="background:#ffffff;color:#16202c;font-family:'Figtree', Arial, sans-serif;padding:96px 128px 96px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:26px;font-weight:700;color:#7b4fd6;letter-spacing:3px;text-transform:uppercase">Layer 2 of 4 · Graph</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#16202c">Steps connected by decisions</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:flex-start">
+<div style="flex:1.25;display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;align-items:center;gap:0">
+<div style="flex:1;background:#f0eafc;border:3px solid #7b4fd6;border-radius:16px;padding:22px 18px"><p style="font-size:26px;font-weight:600;text-align:center">Agent step</p></div>
+<x-connector style="width:44px;color:#7b4fd6;border-width:3px"></x-connector>
+<div style="flex:1;background:#ffffff;border:3px solid #7b4fd6;border-radius:40px;padding:22px 18px"><p style="font-size:26px;font-weight:700;text-align:center;color:#5a33b0">Condition?</p></div>
+<x-connector style="width:44px;color:#1c8a4a;border-width:3px"></x-connector>
+<div style="flex:1;background:#e2f4e9;border:3px solid #1c8a4a;border-radius:16px;padding:22px 18px"><p style="font-size:26px;font-weight:600;text-align:center">Next step</p></div>
+</div>
+<div style="display:flex;gap:16px">
+<p style="flex:1;font-size:26px;line-height:1.35;background:#e2f4e9;color:#16703c;border-radius:14px;padding:14px 18px"><b>Yes:</b> move forward</p>
+<p style="flex:1;font-size:26px;line-height:1.35;background:#e5f1fb;color:#185f9c;border:3px dashed #1f7ac7;border-radius:14px;padding:12px 18px"><b>No:</b> loop back and try again</p>
+</div>
+<div style="display:flex;gap:16px">
+<p style="flex:1;font-size:26px;line-height:1.35;background:#f6f7fa;border-radius:14px;padding:14px 18px"><b>Shared state:</b> facts passed from step to step</p>
+<p style="flex:1;font-size:26px;line-height:1.35;background:#fdf0dc;border-radius:14px;padding:14px 18px"><b>Branch:</b> a detour, e.g. to the manager</p>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px;background:#f6f7fa;border-radius:20px;padding:36px 40px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:36px;font-weight:700;color:#16202c">Where you see it in the demo</h3>
+<p style="font-size:26px;line-height:1.4"><b>The flowchart</b> is the graph.</p>
+<p style="font-size:26px;line-height:1.4"><b>Diamonds</b> are conditions: "Order found?", "Over €100?".</p>
+<p style="font-size:26px;line-height:1.4"><b>Dashed blue arrows</b> are loop-backs: 4 kinds, next slide.</p>
+<p style="font-size:26px;line-height:1.4"><b>"Passing on: …"</b> at each pause is the shared state.</p>
+</div>
+</div>
+<aside>Layer 2 connects agents and steps into a graph. After each step a condition decides where to go: forward to the next step, sideways on a branch, or back to an earlier step to try again. Facts travel along with the work, which is the shared state. In the demo, the flowchart on the right is this graph, and every hand-off pause is an edge being crossed. The next slide zooms in on the four kinds of loop-back.</aside>
+</section>

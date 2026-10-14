@@ -1,0 +1,31 @@
+<section id="layer4" data-transition="fade" style="background:#ffffff;color:#16202c;font-family:'Figtree', Arial, sans-serif;padding:96px 128px 96px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-size:26px;font-weight:700;color:#b4530f;letter-spacing:3px;text-transform:uppercase">Layer 4 of 4 · Meta-harness</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:60px;font-weight:700;line-height:1.1;color:#16202c">Running the team and the rules</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:flex-start">
+<div style="flex:1.25;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;gap:14px">
+<p style="flex:1;font-size:26px;font-weight:600;text-align:center;background:#f0eafc;border-radius:14px;padding:16px 10px">Triage</p>
+<p style="flex:1;font-size:26px;font-weight:600;text-align:center;background:#e5f1fb;border-radius:14px;padding:16px 10px">Order</p>
+<p style="flex:1;font-size:26px;font-weight:600;text-align:center;background:#e1f5f1;border-radius:14px;padding:16px 10px">Resolution</p>
+</div>
+<p style="font-size:30px;font-weight:700;text-align:center;color:#ffffff;background:#b4530f;border-radius:40px;padding:20px 24px">Orchestrator agent</p>
+<div style="display:flex;gap:14px">
+<div style="flex:1;background:#fdf0dc;border-radius:14px;padding:16px 14px"><p style="font-size:26px;font-weight:700;color:#8a4a00">Policy</p><p style="font-size:24px;color:#3d4a5c">tries, budget, privacy</p></div>
+<div style="flex:1;background:#fdf0dc;border-radius:14px;padding:16px 14px"><p style="font-size:26px;font-weight:700;color:#8a4a00">Escalation</p><p style="font-size:24px;color:#3d4a5c">hand to a person</p></div>
+<div style="flex:1;background:#fdf0dc;border-radius:14px;padding:16px 14px"><p style="font-size:26px;font-weight:700;color:#8a4a00">Sandbox</p><p style="font-size:24px;color:#3d4a5c">test, then commit</p></div>
+</div>
+<p style="font-size:26px;line-height:1.4;color:#4a5668">Shared memory (the case file) and an audit log tie it together. In production: many teams at once.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#f6f7fa;border-radius:20px;padding:34px 38px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:36px;font-weight:700;color:#16202c">Where you see it in the demo</h3>
+<p style="font-size:26px;line-height:1.35"><b>Orchestrator card:</b> plans the team and rules, then dispatches each agent.</p>
+<p style="font-size:26px;line-height:1.35"><b>Guardrail:</b> hides card numbers and emails first.</p>
+<p style="font-size:26px;line-height:1.35"><b>Budget policy:</b> too many steps, so the case goes to a person.</p>
+<p style="font-size:26px;line-height:1.35"><b>Sandbox:</b> the refund is tested before it is committed.</p>
+<p style="font-size:26px;line-height:1.35"><b>Control room:</b> plan, budget, case file, audit log.</p>
+</div>
+</div>
+<aside>The meta-harness is the control layer on top of everything, and in the demo it is now a real actor: the Orchestrator. It opens every case: it picks the team for the chosen loop, sets the rules, and hides private data like card numbers and emails before any agent sees them. It dispatches each agent in turn, keeps the shared case file, and counts every step against a budget. Open the control room (the orange bar under the layer strip) and flip "Tight budget" to watch it stop a case and hand it to a person. Before any money moves, it runs the refund in a sandbox, checks the result, and only then commits it. Everything it decides lands in the audit log.</aside>
+</section>

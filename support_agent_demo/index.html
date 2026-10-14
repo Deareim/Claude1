@@ -1,0 +1,1132 @@
+<title>Support Agent Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: loop picker on top, Next banner, then three columns: customer | agents at work | live flowchart (+ timeline tab) */
+:root{
+  --bg:#f3f5f8; --panel:#ffffff; --sunk:#eef1f5; --fg:#16202c; --mut:#5a6878; --line:#dce2ea; --edge:#b9c3cf;
+  --accent:#2f5bd8; --accent-fg:#ffffff; --accent-bg:#e7edfc;
+  --loop:#1f7ac7; --loop-bg:#e5f1fb;
+  --triage:#7b4fd6; --triage-bg:#f0eafc;
+  --order:#1f7ac7; --order-bg:#e5f1fb;
+  --resol:#0f8a78; --resol-bg:#e1f5f1;
+  --writer:#b0457a; --writer-bg:#f9e7f0;
+  --human:#c26a00; --human-bg:#fdf0dc;
+  --cust:#47566a; --cust-bg:#e9edf2;
+  --ok:#1c8a4a; --ok-bg:#e2f4e9; --bad:#b8322a; --bad-bg:#fbe6e4;
+  --l1:#2f5bd8; --l2:#7b4fd6; --l3:#13804f; --l4:#b4530f; --lon:#ffffff;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e141b; --panel:#161e28; --sunk:#111821; --fg:#e7edf4; --mut:#98a6b6; --line:#263241; --edge:#3a4757;
+  --accent:#7aa2ff; --accent-fg:#0e141b; --accent-bg:#1b2742; --loop:#6bb6f5; --loop-bg:#152c40;
+  --triage:#b394ff; --triage-bg:#2a2140; --order:#6bb6f5; --order-bg:#152c40;
+  --resol:#4fd1bc; --resol-bg:#10322d; --writer:#f08bbd; --writer-bg:#3a1a2b; --human:#f5b04f; --human-bg:#3a2a12;
+  --cust:#a9b6c6; --cust-bg:#222c38; --ok:#5fd394; --ok-bg:#14301f; --bad:#ff8a80; --bad-bg:#3a1815;
+  --l1:#7aa2ff; --l2:#b394ff; --l3:#5fd394; --l4:#f5a05a; --lon:#0e141b;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141b; --panel:#161e28; --sunk:#111821; --fg:#e7edf4; --mut:#98a6b6; --line:#263241; --edge:#3a4757;
+  --accent:#7aa2ff; --accent-fg:#0e141b; --accent-bg:#1b2742; --loop:#6bb6f5; --loop-bg:#152c40;
+  --triage:#b394ff; --triage-bg:#2a2140; --order:#6bb6f5; --order-bg:#152c40;
+  --resol:#4fd1bc; --resol-bg:#10322d; --writer:#f08bbd; --writer-bg:#3a1a2b; --human:#f5b04f; --human-bg:#3a2a12;
+  --cust:#a9b6c6; --cust-bg:#222c38; --ok:#5fd394; --ok-bg:#14301f; --bad:#ff8a80; --bad-bg:#3a1815;
+  --l1:#7aa2ff; --l2:#b394ff; --l3:#5fd394; --l4:#f5a05a; --lon:#0e141b;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);padding-inline:16px;padding-block:18px 40px;margin:0}
+.wrap{max-width:1440px;margin:0 auto;display:grid;gap:14px}
+h1,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:clamp(22px,3vw,30px)}
+h2{margin:0;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-family:var(--body);font-weight:700}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+header.top{display:flex;gap:12px 20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.sub{color:var(--mut);margin:2px 0 0;font-size:15px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:none;color:var(--mut);padding:6px 12px;border-radius:7px;font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.ghost{border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:8px 14px;border-radius:10px;font-weight:600}
+.status-chip{font-size:13px;color:var(--mut)}
+.status-chip b{color:var(--fg)}
+
+/* loop picker */
+.picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.picker{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pick{text-align:left;border:2px solid var(--line);background:var(--panel);color:var(--fg);border-radius:12px;padding:12px 14px;display:grid;gap:2px}
+.pick b{font-family:var(--display);font-size:18px}
+.pick span{font-size:13.5px;color:var(--mut);line-height:1.35}
+.pick[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-bg)}
+.scen{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;padding:12px 16px}
+.scen .lbl{font-weight:700;font-size:14px}
+.stoprule{margin-left:auto;font-size:14px;font-weight:600;color:var(--human);background:var(--human-bg);padding:5px 12px;border-radius:20px}
+
+/* layer strip */
+.layers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.layers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lay{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);display:grid;gap:2px;min-width:0;transition:background .25s,border-color .25s}
+.lay b{font-family:var(--display);font-size:17px;color:var(--lc)}
+.lay span{font-size:13px;color:var(--mut);line-height:1.35}
+.lay .ev{font-weight:600;color:var(--fg);overflow-wrap:anywhere}
+.lay.seen{border-color:var(--lc)}
+.lay.on{background:var(--lc);border-color:var(--lc)}
+.lay.on b,.lay.on span,.lay.on .ev{color:var(--lon)}
+.L1{--lc:var(--l1)}.L2{--lc:var(--l2)}.L3{--lc:var(--l3)}.L4{--lc:var(--l4)}
+.layercap{margin:10px 0 0;font-size:14.5px;font-weight:600;color:var(--fg)}
+.flow .x .lt,.lt{display:inline-block;font:700 11px var(--mono);color:var(--lon);background:var(--lc);border-radius:4px;padding:0 4px;margin-right:6px;vertical-align:1px}
+
+/* control room (layer 4) */
+.crbox{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--l4);border-radius:12px;padding:0 12px}
+.crbox summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:10px 0}
+.crbox summary::-webkit-details-marker{display:none}
+.crsum-t{font:700 15px var(--display);color:var(--l4)}
+.crsum{font-size:13.5px;color:var(--mut);font-variant-numeric:tabular-nums;flex:1;min-width:0}
+.crtoggle{font-size:13px;font-weight:700;color:var(--accent)}
+.crtoggle::after{content:"Show details ▾"}
+.crbox[open] .crtoggle::after{content:"Hide details ▴"}
+.crbox[open]{padding-bottom:12px}
+.crhd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.crhd h3{font-size:16px;color:var(--l4)}
+.cr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:8px}
+@media (max-width:1000px){.cr{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.cr{grid-template-columns:minmax(0,1fr)}}
+.tile{border:1px solid var(--line);border-top:4px solid var(--l4);border-radius:12px;padding:10px 12px;font-size:13.5px;min-width:0;display:grid;gap:4px;align-content:start}
+.tile h4{margin:0;font:700 14px var(--body)}
+.tile ul{margin:0;padding-left:18px;display:grid;gap:2px}
+.tile .muted{color:var(--mut)}
+.meter{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--l4);transition:width .3s}
+.meter.over i{background:var(--bad)}
+.mrow{display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.tchip{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px;background:var(--human-bg);color:var(--l4);margin:0 4px 4px 0}
+.tile dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:2px 10px;margin:0}
+.tile dt{color:var(--mut)}.tile dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+
+/* now banner */
+.now{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-radius:14px;padding:14px 18px;background:var(--panel);border:1px solid var(--line)}
+.now.loopy{border:2px solid var(--loop);background:var(--loop-bg)}
+.now p{margin:0;font-size:clamp(17px,2vw,21px);font-weight:600;font-family:var(--display)}
+.now small{display:block;color:var(--mut);font-family:var(--body);font-weight:500;font-size:14px}
+.next{background:var(--accent);color:var(--accent-fg);border:0;padding:12px 22px;border-radius:12px;font-weight:700;font-size:17px;display:inline-flex;gap:10px;align-items:center}
+.next:disabled{opacity:.35;cursor:default}
+.next kbd{font-family:var(--mono);font-size:11px;border:1px solid currentColor;border-radius:4px;padding:0 4px;opacity:.7}
+
+/* columns */
+.cols{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.2fr) minmax(0,1.1fr);gap:14px;align-items:start}
+@media (max-width:1100px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cols .flowcol{grid-column:1/-1}}
+@media (max-width:720px){.cols{grid-template-columns:minmax(0,1fr)}}
+.colhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.flowcol{position:sticky;top:12px}
+@media (max-width:1100px){.flowcol{position:static}}
+
+/* chat */
+.chat{display:grid;gap:10px;min-height:60px}
+.bubble{padding:10px 14px;border-radius:14px;max-width:94%;white-space:pre-wrap;overflow-wrap:anywhere}
+.bubble.me{background:var(--accent);color:var(--accent-fg);justify-self:end;border-bottom-right-radius:4px}
+.bubble.bot{background:var(--sunk);justify-self:start;border-bottom-left-radius:4px}
+.bubble .who{display:block;font-size:12px;font-weight:700;opacity:.8;margin-bottom:2px}
+.compose{display:grid;gap:8px;margin-top:12px}
+textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--line);background:var(--sunk);color:var(--fg);border-radius:10px;padding:10px 12px;font:inherit}
+.send{background:var(--fg);color:var(--bg);border:0;border-radius:10px;padding:11px 16px;font-weight:700}
+.send:disabled{opacity:.4;cursor:default}
+.chips{display:grid;gap:6px;margin-top:12px}
+.chips > span{font-size:13px;color:var(--mut);font-weight:600}
+.chip{text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;padding:8px 10px;font-size:14px}
+.chip:hover{border-color:var(--accent)}
+.chip em{display:block;font-style:normal;font-size:12px;color:var(--mut)}
+
+/* agent cards */
+.work{display:grid;gap:12px}
+.empty{color:var(--mut);display:grid;gap:10px}
+.empty ol{margin:0;padding-left:20px;display:grid;gap:6px;color:var(--fg)}
+.card{border:1px solid var(--line);border-left:5px solid var(--c);border-radius:12px;padding:12px 14px;background:var(--panel);display:grid;gap:8px;animation:in .3s ease}
+@keyframes in{from{transform:translateY(6px);opacity:.3}to{transform:none;opacity:1}}
+.card .hd{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.card .tt{font-family:var(--display);font-weight:700;font-size:18px;color:var(--c)}
+.card .goal{color:var(--mut);font-size:14px;margin:0}
+.badge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--cbg);color:var(--c);white-space:nowrap}
+.think{display:flex;gap:8px;align-items:center;color:var(--mut);font-size:14px}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--c);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px;font-size:14.5px;margin:0}
+.kv dt{color:var(--mut)}.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.tool{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border-radius:8px;padding:8px 10px;overflow-x:auto;white-space:pre}
+.tool.err{background:var(--bad-bg);color:var(--bad)}
+.decide{font-weight:700;font-size:15px;padding:8px 10px;border-radius:8px;background:var(--cbg)}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:14.5px}
+.checks li{display:flex;gap:8px;align-items:baseline}
+.checks .pass{color:var(--ok);font-weight:700}.checks .fail{color:var(--bad);font-weight:700}
+.ask{display:flex;gap:8px;flex-wrap:wrap}
+.ask input{flex:1 1 140px;min-width:0;border:1px solid var(--line);background:var(--sunk);color:var(--fg);border-radius:10px;padding:9px 12px;font:inherit}
+.handoff{display:flex;align-items:center;gap:6px 10px;justify-content:center;flex-wrap:wrap;padding:10px;border:2px dashed var(--accent);border-radius:12px;font-weight:600;font-size:15px;text-align:center}
+.handoff.loop{border-color:var(--loop);background:var(--loop-bg)}
+.handoff .pk{font-weight:500;color:var(--mut);font-size:13.5px;width:100%}
+.handoff.passed{border-style:solid;border-color:var(--line);background:none;color:var(--mut)}
+.approve{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn-ok{background:var(--ok);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-weight:700}
+.btn-no{background:var(--panel);color:var(--bad);border:2px solid var(--bad);border-radius:10px;padding:8px 16px;font-weight:700}
+.sugg{display:flex;gap:6px;flex-wrap:wrap}
+.sugg button{border:1px solid var(--line);background:var(--sunk);color:var(--fg);border-radius:20px;padding:4px 10px;font-size:13px}
+.result{font-weight:700;padding:6px 10px;border-radius:8px}
+.result.ok{background:var(--ok-bg);color:var(--ok)}.result.no{background:var(--bad-bg);color:var(--bad)}
+.tries{font-size:12px;font-weight:700;color:var(--loop);background:var(--loop-bg);padding:2px 9px;border-radius:20px}
+
+/* flowchart */
+.tabs{display:inline-flex;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:3px}
+.tabs button{border:0;background:none;color:var(--mut);padding:5px 12px;border-radius:7px;font-weight:600;font-size:13.5px}
+.tabs button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+#chart svg{width:100%;height:auto;display:block}
+.fn rect,.fn polygon{fill:var(--panel);stroke:var(--edge);stroke-width:2;transition:fill .25s,stroke .25s}
+.fn text{fill:var(--fg);font:600 14.5px var(--body)}
+.fn.k-loop rect{stroke:var(--loop);stroke-dasharray:6 4}
+.fn.k-person rect{stroke:var(--human)}
+.fn.k-start rect{stroke:var(--cust)}
+.fn.active rect,.fn.active polygon{fill:var(--accent);stroke:var(--accent)}
+.fn.active text{fill:var(--accent-fg)}
+.fn.k-loop.active rect,.fn.k-loop.active polygon{fill:var(--loop);stroke:var(--loop)}
+.fn.k-person.active rect{fill:var(--human);stroke:var(--human)}
+.fn.done rect,.fn.done polygon{fill:var(--accent-bg);stroke:var(--accent)}
+.fn.k-loop.done rect{fill:var(--loop-bg);stroke:var(--loop)}
+.fn.k-person.done rect{fill:var(--human-bg);stroke:var(--human)}
+.fe path{fill:none;stroke:var(--edge);stroke-width:2;transition:stroke .25s}
+.fe polygon{fill:var(--edge);transition:fill .25s}
+.fe.t-loop path{stroke-dasharray:7 5}
+.fe text{fill:var(--mut);font:700 13px var(--body)}
+.fe.lit path{stroke:var(--accent);stroke-width:3}.fe.lit polygon{fill:var(--accent)}
+.fe.t-loop.lit path{stroke:var(--loop);stroke-width:3.5;animation:dash .6s linear infinite}.fe.t-loop.lit polygon{fill:var(--loop)}
+.fe.t-stop.lit path{stroke:var(--human)}.fe.t-stop.lit polygon{fill:var(--human)}
+.fe.lit text{fill:var(--fg)}
+@keyframes dash{to{stroke-dashoffset:-12}}
+.fbadge rect{fill:var(--loop)} .fbadge text{fill:#fff;font:700 12px var(--body)}
+.flegend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);margin-top:8px}
+.flegend i{display:inline-block;width:22px;height:0;border-top:3px solid var(--accent);vertical-align:middle;margin-right:5px}
+.flegend i.l{border-top:3px dashed var(--loop)}.flegend i.s{border-top-color:var(--human)}
+
+/* timeline */
+.flow{list-style:none;margin:0;padding:0;display:grid}
+.flow li{display:grid;grid-template-columns:52px 14px minmax(0,1fr);gap:10px;align-items:start;padding-bottom:12px;position:relative}
+.flow li::before{content:"";position:absolute;left:68px;top:16px;bottom:-2px;width:2px;background:var(--line)}
+.flow li:last-child::before{display:none}
+.flow .t{font-family:var(--mono);font-size:12px;color:var(--mut);text-align:right;padding-top:1px;font-variant-numeric:tabular-nums}
+.flow .d{width:14px;height:14px;border-radius:50%;background:var(--c);margin-top:3px;position:relative;z-index:1;box-shadow:0 0 0 3px var(--panel)}
+.flow .x{font-size:14px;min-width:0}
+.flow .x span:not(.lt){display:block;color:var(--mut);font-size:13px;overflow-wrap:anywhere}
+.flow li.pause .d{background:var(--panel);border:2px dashed var(--accent)}
+.flow li.loopy .d{background:var(--loop)}
+.c-cust{--c:var(--cust);--cbg:var(--cust-bg)} .c-triage{--c:var(--triage);--cbg:var(--triage-bg)}
+.c-order{--c:var(--order);--cbg:var(--order-bg)} .c-resol{--c:var(--resol);--cbg:var(--resol-bg)}
+.c-writer{--c:var(--writer);--cbg:var(--writer-bg)} .c-review{--c:var(--loop);--cbg:var(--loop-bg)}
+.c-human{--c:var(--human);--cbg:var(--human-bg)} .c-orch{--c:var(--l4);--cbg:var(--human-bg)} .c-db{--c:var(--order);--cbg:var(--order-bg)} .c-ai{--c:var(--accent);--cbg:var(--accent-bg)}
+.note{font-size:13px;color:var(--mut);margin:8px 0 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Support Agent Team: loops and layers</h1>
+      <p class="sub">Pick a loop, send a complaint, and watch the agents go back and try again. The layer strip shows which of the 4 layers is working.</p>
+    </div>
+    <div class="controls">
+      <span class="status-chip" id="aiStatus">AI: <b>checking...</b></span>
+      <div class="seg" role="group" aria-label="AI mode">
+        <button id="modeLive" aria-pressed="true">Live Claude</button>
+        <button id="modeOff" aria-pressed="false">Offline script</button>
+      </div>
+      <button class="ghost" id="reset">Start over</button>
+    </div>
+  </header>
+
+  <nav class="picker" id="picker" aria-label="Choose a loop"></nav>
+
+  <section class="panel scen" aria-label="Scenario">
+    <span class="lbl">Make it happen:</span>
+    <div class="seg" id="switch" role="group" aria-label="Scenario switch"></div>
+    <span class="stoprule">Stop rule: max 3 tries, then a person takes over</span>
+  </section>
+
+  <section class="panel" aria-label="Agent system layers">
+    <div class="colhd"><h2>The 4 layers of an agent system</h2><span class="status-chip">Filled = the layer working right now</span></div>
+    <div class="layers" id="layers"></div>
+    <p class="layercap" id="layerCap">Send a complaint to see which layer is doing the work at each moment.</p>
+    <details class="crbox" id="crBox">
+    <summary><span class="crsum-t">Layer 4 control room</span><span class="crsum" id="crSum"></span><span class="crtoggle"></span></summary>
+    <div class="crhd"><span class="status-chip">What the orchestrator manages: plan, budget, shared memory, audit</span>
+      <div class="seg" role="group" aria-label="Budget policy"><button id="budNormal" aria-pressed="true">Normal budget</button><button id="budTight" aria-pressed="false">Tight budget (forces a policy stop)</button></div></div>
+    <div class="cr">
+      <div class="tile"><h4>Run plan</h4><div id="crPlan"></div></div>
+      <div class="tile"><h4>Budget and monitoring</h4><div id="crBudget"></div></div>
+      <div class="tile"><h4>Shared memory (case file)</h4><div id="crMem"></div></div>
+      <div class="tile"><h4>Audit log and guardrails</h4><div id="crAudit"></div></div>
+    </div>
+    </details>
+  </section>
+
+  <div class="now" id="now" aria-live="polite">
+    <p id="nowText">Ready. Pick an example complaint or type your own.<small>The demo stops at every hand-off and every loop so you can explain what happened.</small></p>
+    <button class="next" id="nextBtn" disabled>Next <kbd>→</kbd></button>
+  </div>
+
+  <div class="cols">
+    <section class="panel">
+      <div class="colhd"><h2>1 · Customer</h2></div>
+      <div class="chat" id="chat"></div>
+      <div class="compose">
+        <label for="msg" class="status-chip">Type a complaint as the customer</label>
+        <textarea id="msg" placeholder="e.g. Order 1002: my espresso machine leaks. Please refund me."></textarea>
+        <button class="send" id="sendBtn">Send complaint</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <section class="panel">
+      <div class="colhd"><h2>2 · Agents at work</h2></div>
+      <div class="work" id="work"></div>
+    </section>
+
+    <section class="panel flowcol">
+      <div class="colhd">
+        <h2>3 · Live flow</h2>
+        <div class="tabs" role="group" aria-label="View">
+          <button id="tabChart" aria-pressed="true">Flowchart</button>
+          <button id="tabTime" aria-pressed="false">Timeline</button>
+        </div>
+        <span class="status-chip" id="clock">0.0 s</span>
+      </div>
+      <div id="chart"></div>
+      <div class="flegend"><span><i></i>path taken</span><span><i class="l"></i>loop (goes back)</span><span><i class="s"></i>stop rule</span></div>
+      <ol class="flow" id="flow" hidden></ol>
+      <p class="note">The clock counts working time only; it stops while the demo is paused.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ================= data ================= */
+const ORDERS = {
+  "1001": {id:"1001", customer:"Emma Laurent", product:"Wireless headphones", keys:["headphone","earbud","headset"], price:79,   status:"Delivered 2 Oct", inStock:true},
+  "1002": {id:"1002", customer:"Lucas Martin", product:"Espresso machine",   keys:["espresso","coffee"],            price:249,  status:"Delivered 5 Oct", inStock:true},
+  "1003": {id:"1003", customer:"Sofia Rossi",  product:"Running shoes",      keys:["shoe","sneaker","trainer"],     price:95,   status:"Delivered 7 Oct", inStock:true},
+  "1004": {id:"1004", customer:"Noah Dubois",  product:"Laptop 14\"",        keys:["laptop","computer","notebook"], price:1199, status:"In transit, no tracking scan for 10 days", inStock:true},
+  "1005": {id:"1005", customer:"Mia Chen",     product:"Phone case",         keys:["phone case","case","cover"],    price:19,   status:"Delivered 9 Oct (3 days late)", inStock:true},
+};
+const LIMIT = 100, MAX_TRIES = 3;
+const GUARD_EXAMPLE = ["Order 1001: my headphones are broken. I paid with card 4111 1111 1111 1111, email emma@example.com. Refund please.", "Card number + email: the orchestrator hides them"];
+
+const LOOPS = {
+  ask: {name:"1 · Ask and retry", short:"Missing information? The agent asks the customer, then searches again.",
+    switch:[["ok","Customer answers correctly"],["wrong","Customer gives a wrong number every time"]],
+    examples:[["My package never arrived!! This is ridiculous.","No order number: the agent has to ask"],
+              ["Something is wrong with what I ordered last week.","Vague: the agent has to ask"]]},
+  check: {name:"2 · Check my own work", short:"Not good enough? A reviewer checks the reply and sends it back for a rewrite.",
+    switch:[["off","Writer is good"],["once","First draft is weak"],["always","Every draft is weak"]],
+    examples:[["Wrong size shoes in order 1003, can I swap them?","Replacement, €95"],
+              ["My headphones arrived broken. I want my money back.","Refund, €79"]]},
+  human: {name:"3 · Human feedback", short:"Manager says no? Their comment goes back to the Resolution Agent, which decides again.",
+    switch:[["you","You play the manager"],["once","Manager rejects once"],["always","Manager always rejects"]],
+    examples:[["Order 1004: my laptop never arrived. I want a refund.","€1,199: needs the manager"],
+              ["Order 1002: the espresso machine leaks. Please refund me.","€249: needs the manager"]]},
+  tool: {name:"4 · Tool retry", short:"A system failed? The agent waits and tries the database again.",
+    switch:[["works","Database works"],["once","Fails once"],["twice","Fails twice"],["always","Database is down"]],
+    examples:[["Order 1001: my headphones arrived broken, refund please.","Refund, €79"],
+              ["Order 1005: my phone case came 3 days late.","No refund due"]]},
+};
+
+/* flowcharts: [id, label, kind, col, row]; edges: [from, to, label, route, type] */
+const FLOWS = {
+  ask: {rows:7, nodes:[
+    ["c","Customer sends\nthe complaint","start",0,0],["t","Triage Agent\nunderstands it","step",0,1],
+    ["o","Order Agent\nsearches orders","step",0,2],["found","Order found?","dec",0,3],
+    ["r","Resolution Agent\ndecides","step",0,4],["safe","Safety rule\n(over €100: manager)","step",0,5],
+    ["end","Answer sent\nto the customer","start",0,6],
+    ["ask","Ask the customer\nfor the order number","loop",1,2],["tries","Tries left?\n(max 3)","dec",1,3],
+    ["person","Hand over\nto a person","person",1,4]],
+    edges:[["c","t","","down"],["t","o","","down"],["o","found","","down"],["found","r","Yes","down"],
+      ["found","tries","No","right"],["tries","ask","Yes","up","loop"],["ask","o","","left","loop"],
+      ["tries","person","No","down","stop"],["person","end","","fwdleft","stop"],["r","safe","","down"],["safe","end","","down"]]},
+  check: {rows:8, nodes:[
+    ["c","Customer sends\nthe complaint","start",0,0],["to","Triage + Order\nagents","step",0,1],
+    ["r","Resolution Agent\ndecides","step",0,2],["w","Writer Agent\ndrafts the reply","step",0,3],
+    ["rev","Reviewer Agent\nchecks the draft","step",0,4],["ok","Draft passes\nall checks?","dec",0,5],
+    ["safe","Safety rule\n(over €100: manager)","step",0,6],["end","Answer sent\nto the customer","start",0,7],
+    ["fb","Reviewer notes\nback to the writer","loop",1,3],["tries","Tries left?\n(max 3)","dec",1,5],
+    ["person","A person writes\nthe reply","person",1,6]],
+    edges:[["c","to","","down"],["to","r","","down"],["r","w","","down"],["w","rev","","down"],["rev","ok","","down"],
+      ["ok","safe","Yes","down"],["ok","tries","No","right"],["tries","fb","Yes","up","loop"],["fb","w","","left","loop"],
+      ["tries","person","No","down","stop"],["person","end","","fwdleft","stop"],["safe","end","","down"]]},
+  human: {rows:6, nodes:[
+    ["c","Customer sends\nthe complaint","start",0,0],["to","Triage + Order\nagents","step",0,1],
+    ["r","Resolution Agent\ndecides","step",0,2],["over","Over €100?","dec",0,3],
+    ["mgr","Manager\napproves?","dec",0,4],["end","Answer sent\nto the customer","start",0,5],
+    ["back","Manager's comment\nback to Resolution","loop",1,2],["tries","Tries left?\n(max 3)","dec",1,4],
+    ["person","Senior specialist\ntakes over","person",1,5]],
+    edges:[["c","to","","down"],["to","r","","down"],["r","over","","down"],["over","mgr","Yes","down"],
+      ["over","end","No","bypass"],["mgr","end","Yes","down"],["mgr","tries","No","right"],
+      ["tries","back","Yes","up","loop"],["back","r","","left","loop"],["tries","person","No","down","stop"]]},
+  tool: {rows:7, nodes:[
+    ["c","Customer sends\nthe complaint","start",0,0],["t","Triage Agent\nunderstands it","step",0,1],
+    ["o","Order Agent\ncalls the database","step",0,2],["db","Database\nanswered?","dec",0,3],
+    ["r","Resolution Agent\ndecides","step",0,4],["safe","Safety rule\n(over €100: manager)","step",0,5],
+    ["end","Answer sent\nto the customer","start",0,6],
+    ["wait","Wait, then\ntry again","loop",1,2],["tries","Tries left?\n(max 3)","dec",1,3],
+    ["person","Hand over: the\nsystem is down","person",1,4]],
+    edges:[["c","t","","down"],["t","o","","down"],["o","db","","down"],["db","r","Yes","down"],
+      ["db","tries","No","right"],["tries","wait","Yes","up","loop"],["wait","o","","left","loop"],
+      ["tries","person","No","down","stop"],["person","end","","fwdleft","stop"],["r","safe","","down"],["safe","end","","down"]]},
+};
+
+const NAMES = {cust:"Customer", app:"App", ai:"Claude", triage:"Triage Agent", order:"Order Agent", db:"Order database",
+  resol:"Resolution Agent", writer:"Writer Agent", review:"Reviewer Agent", human:"Manager", gate:"Safety rule", person:"A person", orch:"Orchestrator", sandbox:"Sandbox"};
+const CLS = {cust:"c-cust", app:"c-ai", ai:"c-ai", triage:"c-triage", order:"c-order", db:"c-db", resol:"c-resol",
+  writer:"c-writer", review:"c-review", human:"c-human", gate:"c-ai", person:"c-human", orch:"c-orch", sandbox:"c-orch"};
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return n;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs = {}) { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; }
+const eur = n => "€" + Number(n).toLocaleString("en-GB", {maximumFractionDigits: 0});
+const first = o => o.customer.split(" ")[0];
+
+/* run token: any old run throws STOP when it resumes after Start over */
+const STOP = Symbol("stop");
+let CUR = {}, pendingRejects = [];
+function guard(tok) { if (tok !== CUR) throw STOP; }
+function sleep(ms) { const tok = CUR; return new Promise(r => setTimeout(r, ms)).then(() => guard(tok)); }
+function waitFor(setup) {
+  const tok = CUR;
+  return new Promise((res, rej) => { pendingRejects.push(rej); setup(res); }).then(v => { guard(tok); return v; });
+}
+
+/* ================= state + picker ================= */
+let loop = "ask", sw = {ask: "ok", check: "once", human: "you", tool: "once"};
+const picker = $("#picker");
+for (const [k, L] of Object.entries(LOOPS)) {
+  picker.append(el("button", {class: "pick", "data-k": k, "aria-pressed": k === loop, onclick: () => selectLoop(k)},
+    el("b", {text: L.name}), el("span", {text: L.short})));
+}
+function selectLoop(k) {
+  loop = k; reset();
+  picker.querySelectorAll(".pick").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === k));
+  const s = $("#switch"); s.innerHTML = "";
+  for (const [v, label] of LOOPS[k].switch) {
+    const b = el("button", {"aria-pressed": sw[k] === v}, label);
+    b.onclick = () => { sw[k] = v; s.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); };
+    s.append(b);
+  }
+  const ch = $("#chips"); ch.innerHTML = ""; ch.append(el("span", {text: "Examples for this loop"}));
+  for (const [t, why] of [...LOOPS[k].examples, GUARD_EXAMPLE]) ch.append(el("button", {class: "chip", onclick: () => run(t)}, t, el("em", {text: why})));
+  renderChart(k);
+}
+
+/* ================= flowchart ================= */
+const G = {W: 500, c0: {cx: 132, w: 236}, c1: {cx: 384, w: 212}, rowH: 78, h: 50, top: 16};
+let geoById = {}, nodeEls = {}, edgeEls = {};
+function geo(n) {
+  const c = n[3] ? G.c1 : G.c0, y = G.top + n[4] * G.rowH;
+  return {cx: c.cx, w: c.w, l: c.cx - c.w / 2, r: c.cx + c.w / 2, y, b: y + G.h, cy: y + G.h / 2};
+}
+function route(a, b, kind) {
+  switch (kind) {
+    case "down": return [[a.cx, a.b], [b.cx, b.y]];
+    case "up": return [[a.cx, a.y], [b.cx, b.b]];
+    case "right": return [[a.r, a.cy], [b.l, b.cy]];
+    case "left": return [[a.l, a.cy], [b.r, b.cy]];
+    case "fwdleft": return [[a.cx, a.b], [a.cx, b.cy], [b.r, b.cy]];
+    case "bypass": return [[a.l, a.cy], [8, a.cy], [8, b.cy], [b.l, b.cy]];
+  }
+}
+function renderChart(k) {
+  const F = FLOWS[k], H = G.top * 2 + F.rows * G.rowH - (G.rowH - G.h);
+  const svg = sv("svg", {viewBox: `0 0 ${G.W} ${H}`, role: "img", "aria-label": `Flowchart of loop ${LOOPS[k].name}`});
+  geoById = {}; nodeEls = {}; edgeEls = {};
+  for (const n of F.nodes) geoById[n[0]] = geo(n);
+  for (const [a, b, label, kind, type = "n"] of F.edges) {
+    const pts = route(geoById[a], geoById[b], kind);
+    const g = sv("g", {class: `fe t-${type}`});
+    g.append(sv("path", {d: "M" + pts.map(p => p.join(",")).join(" L")}));
+    const [p, q] = pts.slice(-2), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+    g.append(sv("polygon", {points: `${q[0]},${q[1]} ${q[0] - ux * 10 - uy * 5},${q[1] - uy * 10 + ux * 5} ${q[0] - ux * 10 + uy * 5},${q[1] - uy * 10 - ux * 5}`}));
+    if (label) {
+      const [s, t] = pts;
+      let x, y, anchor = "start";
+      if (kind === "down" || kind === "up") { x = s[0] + 8; y = (s[1] + t[1]) / 2 + 5; }
+      else if (kind === "bypass") { x = 12; y = (geoById[a].cy + geoById[b].cy) / 2; }
+      else { x = (s[0] + t[0]) / 2; y = s[1] - 7; anchor = "middle"; }
+      const tx = sv("text", {x, y, "text-anchor": anchor}); tx.textContent = label; g.append(tx);
+    }
+    svg.append(g); edgeEls[a + ">" + b] = g;
+  }
+  for (const n of F.nodes) {
+    const [id, label, kindN] = n, gm = geoById[id];
+    const g = sv("g", {class: `fn k-${kindN}`});
+    if (kindN === "dec") g.append(sv("polygon", {points: `${gm.l + 16},${gm.y} ${gm.r - 16},${gm.y} ${gm.r},${gm.cy} ${gm.r - 16},${gm.b} ${gm.l + 16},${gm.b} ${gm.l},${gm.cy}`}));
+    else g.append(sv("rect", {x: gm.l, y: gm.y, width: gm.w, height: G.h, rx: kindN === "start" ? 25 : 10}));
+    const lines = label.split("\n"), t = sv("text", {"text-anchor": "middle"});
+    lines.forEach((ln, i) => { const ts = sv("tspan", {x: gm.cx, y: gm.cy + (i - (lines.length - 1) / 2) * 17 + 5}); ts.textContent = ln; t.append(ts); });
+    g.append(t); svg.append(g); nodeEls[id] = g;
+  }
+  $("#chart").innerHTML = ""; $("#chart").append(svg);
+}
+let activeNode = null;
+function fNode(id, state) {
+  const g = nodeEls[id]; if (!g) return;
+  if (state === "active") { if (activeNode && activeNode !== id) fNode(activeNode, "done"); activeNode = id; }
+  g.classList.remove("active", "done"); if (state) g.classList.add(state);
+}
+function fGo(a, b) { const e = edgeEls[a + ">" + b]; if (e) e.classList.add("lit"); fNode(b, "active"); }
+function fBadge(id, text) {
+  const g = nodeEls[id], gm = geoById[id]; if (!g) return;
+  const svg = g.ownerSVGElement;
+  svg.querySelector(`.fbadge[data-for="${id}"]`)?.remove();
+  const b = sv("g", {class: "fbadge", "data-for": id}), w = text.length * 7 + 14;
+  b.append(sv("rect", {x: gm.r - w + 6, y: gm.y - 12, width: w, height: 20, rx: 10}));
+  const t = sv("text", {x: gm.r - w / 2 + 6, y: gm.y + 2, "text-anchor": "middle"}); t.textContent = text; b.append(t);
+  svg.append(b);
+}
+
+/* ================= orchestrator (layer 4) ================= */
+const TEAMS = {ask: ["Triage", "Order", "Resolution"], check: ["Triage", "Order", "Resolution", "Writer", "Reviewer"],
+  human: ["Triage", "Order", "Resolution", "Manager"], tool: ["Triage", "Order", "Resolution"]};
+const BUDGETS = {normal: {step: 12, tool: 8}, tight: {step: 4, tool: 2}};
+const AGENT_KEYS = new Set(["triage", "order", "resol", "writer", "review"]);
+let budgetMode = "normal";
+let ORCH = freshOrch();
+function freshOrch() { return {used: {step: 0, tool: 0}, loops: 0, events: 0, audit: [], mem: {}, guard: [], active: "-", order: null}; }
+function mem(obj) { Object.assign(ORCH.mem, obj); renderCR(); }
+function renderCR() {
+  const B = BUDGETS[budgetMode];
+  const parts = [`Agent steps ${ORCH.used.step}/${B.step}`, `Tool calls ${ORCH.used.tool}/${B.tool}`, `Loops ${ORCH.loops}`, `Working now: ${ORCH.active}`];
+  if (ORCH.guard.length) parts.push("Guardrail: " + ORCH.guard.join(", ") + " hidden");
+  if (budgetMode === "tight") parts.push("Tight budget");
+  $("#crSum").textContent = parts.join(" · ");
+  const plan = $("#crPlan"); plan.innerHTML = "";
+  plan.append(el("div", {}, TEAMS[loop].map(t => el("span", {class: "tchip", text: t}))),
+    el("ul", {}, el("li", {text: `Stop rule: max ${MAX_TRIES} tries per loop`}), el("li", {text: `Over ${eur(LIMIT)}: manager approves`}),
+      el("li", {text: `Budget: ${B.step} agent steps, ${B.tool} tool calls`}), el("li", {text: "Hide card numbers and emails"}),
+      el("li", {text: "Money actions run in a sandbox first"})));
+  const bud = $("#crBudget"); bud.innerHTML = "";
+  for (const [k, label] of [["step", "Agent steps"], ["tool", "Tool calls"]]) {
+    const u = ORCH.used[k], max = B[k], over = u > max;
+    bud.append(el("div", {class: "mrow"}, el("span", {text: label}), el("b", {text: `${u} / ${max}`})),
+      el("div", {class: "meter" + (over ? " over" : "")}, el("i", {style: `width:${Math.min(100, u / max * 100)}%`})));
+  }
+  bud.append(el("div", {class: "mrow"}, el("span", {text: "Loops so far"}), el("b", {text: ORCH.loops})),
+    el("div", {class: "mrow"}, el("span", {text: "Working now"}), el("b", {text: ORCH.active})),
+    el("div", {class: "mrow"}, el("span", {text: "Events logged"}), el("b", {text: ORCH.events})));
+  const m = $("#crMem"); m.innerHTML = "";
+  const keys = Object.entries(ORCH.mem);
+  m.append(keys.length ? el("dl", {}, keys.flatMap(([k, v]) => [el("dt", {text: k}), el("dd", {text: v})])) : el("span", {class: "muted", text: "Empty until a run starts. Every agent reads and writes here."}));
+  const a = $("#crAudit"); a.innerHTML = "";
+  a.append(el("div", {class: "mrow"}, el("span", {text: "Layer 4 events"}), el("b", {text: ORCH.audit.length})));
+  if (ORCH.guard.length) a.append(el("div", {class: "result ok", style: "font-size:13px;padding:4px 8px", text: "Guardrail: " + ORCH.guard.join(", ") + " hidden"}));
+  const last = ORCH.audit.slice(-4);
+  a.append(last.length ? el("ul", {}, last.map(t => el("li", {text: t}))) : el("span", {class: "muted", text: "Every decision the orchestrator makes is recorded here."}));
+}
+function setBudget(m) { budgetMode = m; $("#budNormal").setAttribute("aria-pressed", m === "normal"); $("#budTight").setAttribute("aria-pressed", m === "tight"); renderCR(); }
+$("#budNormal").onclick = () => setBudget("normal");
+try { if (localStorage.getItem("crOpen") === "1") $("#crBox").open = true; } catch {}
+$("#crBox").addEventListener("toggle", () => { try { localStorage.setItem("crOpen", $("#crBox").open ? "1" : "0"); } catch {} });
+$("#budTight").onclick = () => setBudget("tight");
+class PolicyStop { constructor(reason) { this.reason = reason; } }
+function useBudget(kind) {
+  ORCH.used[kind]++; renderCR();
+  const max = BUDGETS[budgetMode][kind];
+  if (ORCH.used[kind] > max) throw new PolicyStop(`Budget policy: ${ORCH.used[kind]} ${kind === "step" ? "agent steps" : "tool calls"} would exceed the limit of ${max}.`);
+}
+function redact(text) {
+  const found = [];
+  let clean = text.replace(/\b(?:\d[ -]?){12,18}\d\b/g, () => { found.push("card number"); return "[card number hidden]"; });
+  clean = clean.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, () => { found.push("email"); return "[email hidden]"; });
+  return {clean, found};
+}
+function dispatch(key) {
+  ORCH.active = NAMES[key];
+  hop("orch", key, "dispatches", `rules checked · budget ${ORCH.used.step}/${BUDGETS[budgetMode].step} steps, ${ORCH.used.tool}/${BUDGETS[budgetMode].tool} tool calls`);
+  renderCR();
+}
+async function orchestratorPlan(text) {
+  now("The Orchestrator is planning the run.", "Layer 4: it picks the team, sets the rules and protects private data before any agent starts.");
+  const c = card("orch", "Orchestrator (meta-harness)", "Runs the whole team: plans, dispatches agents, enforces rules, keeps the case file.");
+  await sleep(700);
+  const {clean, found} = redact(text);
+  ORCH.guard = found;
+  c.done("plan ready");
+  c.kv([["Team", TEAMS[loop].join(", ")], ["Rules", `max ${MAX_TRIES} tries · over ${eur(LIMIT)} → manager · ${BUDGETS[budgetMode].step} agent steps, ${BUDGETS[budgetMode].tool} tool calls`], ["Sandbox", "money actions are simulated before they are committed"]]);
+  c.decide(found.length ? `Guardrail: hid ${found.join(" and ")} before sharing the message with the agents.` : "Guardrail: no private data found in the message.");
+  hop("orch", null, "plans the run", `team: ${TEAMS[loop].join(", ")}${found.length ? " · hid " + found.join(", ") : ""}`);
+  mem({Complaint: clean.length > 70 ? clean.slice(0, 70) + "..." : clean});
+  return clean;
+}
+async function sandboxRun(res, o) {
+  if (!res.amount) return;
+  const c = card("orch", "Orchestrator: sandbox", `Runs the ${res.decision} in a safe copy first, checks it, then commits it for real.`);
+  hop("orch", "sandbox", "test run", `${res.decision} ${eur(res.amount)} for order ${o.id}`);
+  c.status("Simulating the payment in the sandbox...");
+  await sleep(900);
+  hop("sandbox", "orch", "test passed", "amount, order and customer all match");
+  c.tool(`sandbox: ${res.decision}(order=${o.id}, amount=${res.amount}) → OK\ncheck: amount ≤ price, order not refunded before → OK`);
+  c.done("committed");
+  c.decide(`Test passed, so the ${res.decision} of ${eur(res.amount)} is committed.`);
+  hop("orch", null, "commits the action", `${res.decision} ${eur(res.amount)}`);
+  mem({Action: `${res.decision} ${eur(res.amount)} committed`});
+}
+
+/* ================= clock + timeline ================= */
+let worked = 0, runStart = null, ticker = null;
+const clockStart = () => { runStart = performance.now(); };
+const clockStop = () => { if (runStart != null) { worked += performance.now() - runStart; runStart = null; } };
+const secs = () => (worked + (runStart != null ? performance.now() - runStart : 0)) / 1000;
+function startTicker() { clearInterval(ticker); ticker = setInterval(() => { $("#clock").textContent = secs().toFixed(1) + " s"; }, 100); }
+const flow = $("#flow");
+const LAYERS = [
+  [1, "Loop", "One agent thinks and acts", "Layer 1 · Loop: an agent is understanding, reasoning with Claude, acting or checking its result."],
+  [2, "Graph", "Steps, conditions, loop-backs", "Layer 2 · Graph: work moves along the flowchart: a hand-off, a condition, or a loop back."],
+  [3, "Harness", "Tools, data, permissions, traces", "Layer 3 · Harness: the agent uses what the system gives it: a tool (the database), data, or a permission check (the €100 rule)."],
+  [4, "Meta-harness", "Orchestrator and policies", "Layer 4 · Meta-harness: the orchestrator runs the team and enforces policies such as the stop rule."],
+];
+for (const [n, name, what] of LAYERS) $("#layers").append(el("div", {class: `lay L${n}`, "data-l": n},
+  el("b", {text: `${n} · ${name}`}), el("span", {text: what}), el("span", {class: "ev", text: "-"})));
+function setLayer(n, msg) {
+  document.querySelectorAll(".lay").forEach(c => c.classList.toggle("on", +c.dataset.l === n));
+  const c = document.querySelector(`.lay[data-l="${n}"]`); c.classList.add("seen"); c.querySelector(".ev").textContent = "Now: " + msg;
+  $("#layerCap").textContent = LAYERS[n - 1][3];
+}
+function resetLayers() {
+  document.querySelectorAll(".lay").forEach(c => { c.classList.remove("on", "seen"); c.querySelector(".ev").textContent = "-"; });
+  $("#layerCap").textContent = "Send a complaint to see which layer is doing the work at each moment.";
+}
+function layerOf(from, to, extra) {
+  if (extra.includes("pause")) return 2;
+  if (["orch", "sandbox"].includes(from) || ["orch", "sandbox"].includes(to)) return 4;
+  if (from === "db" || to === "db") return 3;
+  if (from === "ai" || to === "ai") return 1;
+  if (from === "gate" || from === "human" || to === "human") return 3;
+  if (from === "person" || to === "person" || from === "app" || to === "app") return 4;
+  return 1;
+}
+function hop(from, to, label, detail, extra = "") {
+  const L = layerOf(from, to, extra);
+  ORCH.events++; if (L === 4) ORCH.audit.push(`${to ? NAMES[from] + " → " + NAMES[to] : NAMES[from]} ${label}`);
+  setLayer(L, `${to ? NAMES[from] + " → " + NAMES[to] : NAMES[from]} ${label}`);
+  flow.append(el("li", {class: (CLS[from] || "c-ai") + (extra ? " " + extra : "")},
+    el("span", {class: "t", text: secs().toFixed(1) + "s"}), el("span", {class: "d"}),
+    el("span", {class: "x"}, el("span", {class: `lt L${L}`, text: "L" + L}), el("b", {text: to ? `${NAMES[from]} → ${NAMES[to]}` : NAMES[from]}), " ", label, detail ? el("span", {text: detail}) : null)));
+}
+$("#tabChart").onclick = () => { $("#chart").hidden = false; $(".flegend").hidden = false; flow.hidden = true; $("#tabChart").setAttribute("aria-pressed", true); $("#tabTime").setAttribute("aria-pressed", false); };
+$("#tabTime").onclick = () => { $("#chart").hidden = true; $(".flegend").hidden = true; flow.hidden = false; $("#tabChart").setAttribute("aria-pressed", false); $("#tabTime").setAttribute("aria-pressed", true); };
+
+/* ================= banner + Next ================= */
+let nextResolve = null;
+function now(text, sub = "", loopy = false) { const p = $("#nowText"); p.textContent = text; p.append(el("small", {text: sub})); $("#now").classList.toggle("loopy", loopy); }
+function scrollWork(n) { n.scrollIntoView({block: "nearest", behavior: "smooth"}); }
+async function waitNext(fromKey, toKey, payload, isLoop = false, tryText = "") {
+  clockStop();
+  const card = el("div", {class: "handoff" + (isLoop ? " loop" : "")},
+    isLoop ? `Loop: ${NAMES[fromKey]} sends it back to ${NAMES[toKey]}` : `Hand-off: ${NAMES[fromKey]} → ${NAMES[toKey]}`,
+    tryText ? el("span", {class: "tries", text: tryText}) : null,
+    el("span", {class: "pk", text: (isLoop ? "Why: " : "Passing on: ") + payload}));
+  $("#work").append(card); scrollWork(card);
+  hop(fromKey, toKey, isLoop ? "loop back (paused)" : "hand-off (paused)", payload, isLoop ? "pause loopy" : "pause");
+  now(isLoop ? `Loop! ${NAMES[fromKey]} goes back to ${NAMES[toKey]}${tryText ? " (" + tryText + ")" : ""}.` : `Paused: ${NAMES[fromKey]} hands over to ${NAMES[toKey]}.`,
+      isLoop ? "Something wasn't right, so the agent tries again instead of giving up. Click Next." : "Explain what just happened, then click Next (or press →).", isLoop);
+  const btn = $("#nextBtn"); btn.disabled = false; btn.focus({preventScroll: true});
+  await waitFor(res => { nextResolve = () => { nextResolve = null; btn.disabled = true; res(); }; });
+  card.classList.add("passed"); $("#now").classList.remove("loopy"); clockStart();
+  if (isLoop) ORCH.loops++;
+  if (AGENT_KEYS.has(toKey)) dispatch(toKey); else renderCR();
+}
+$("#nextBtn").onclick = () => nextResolve && nextResolve();
+document.addEventListener("keydown", e => {
+  if (["TEXTAREA", "INPUT"].includes(document.activeElement?.tagName)) return;
+  if ((e.key === "ArrowRight" || e.key === "n" || e.key === "N") && nextResolve) { e.preventDefault(); nextResolve(); }
+});
+
+/* ================= chat ================= */
+function say(who, text) {
+  const b = el("div", {class: "bubble " + (who === "me" ? "me" : "bot")}, el("span", {class: "who", text: who === "me" ? "Customer" : "Support (AI team)"}), text);
+  $("#chat").append(b); b.scrollIntoView({block: "nearest", behavior: "smooth"});
+}
+
+/* ================= Claude (live) with offline fallback ================= */
+let mode = "live", samplePromise, sampleFn, liveBroken = false;
+try { samplePromise = window.claude?.use ? window.claude.use("sample") : Promise.resolve(null); } catch { samplePromise = Promise.resolve(null); }
+samplePromise.then(s => { sampleFn = s; refreshStatus(); }).catch(() => { sampleFn = null; refreshStatus(); });
+function refreshStatus() {
+  const s = $("#aiStatus");
+  if (mode === "off") s.innerHTML = "AI: <b>offline script</b>";
+  else if (liveBroken || sampleFn === null) s.innerHTML = "AI: <b>offline script</b> (Claude not available here)";
+  else if (sampleFn) s.innerHTML = "AI: <b>Claude live</b>";
+  else s.innerHTML = "AI: <b>checking...</b>";
+}
+setTimeout(refreshStatus, 11000);
+function setMode(m) { mode = m; $("#modeLive").setAttribute("aria-pressed", m === "live"); $("#modeOff").setAttribute("aria-pressed", m === "off"); refreshStatus(); }
+$("#modeLive").onclick = () => { liveBroken = false; setMode("live"); };
+$("#modeOff").onclick = () => setMode("off");
+async function think(agentKey, prompt, offline) {
+  const tok = CUR;
+  if (mode === "live" && !liveBroken) {
+    const s = await samplePromise.catch(() => null); guard(tok);
+    if (s) {
+      hop(agentKey, "ai", "asks Claude", "Instructions + the data this agent needs");
+      try {
+        const out = await s.json(prompt, {modelTier: "quick", cache: false}); guard(tok);
+        hop("ai", agentKey, "answers", "Structured answer (JSON) back to the agent");
+        return {out, live: true};
+      } catch (e) {
+        if (e === STOP) throw e; guard(tok);
+        if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed", "session_expired"].includes(e.code)) liveBroken = true;
+        hop("ai", agentKey, "unavailable", `Claude call failed (${e.code}); offline rules used for this step`); refreshStatus();
+      }
+    }
+  }
+  await sleep(500);
+  hop(agentKey, null, "uses offline rules", "Same job, done with fixed rules instead of Claude");
+  return {out: offline(), live: false};
+}
+
+/* ================= agent cards ================= */
+function card(key, title, goal) {
+  const c = el("div", {class: "card " + CLS[key]},
+    el("div", {class: "hd"}, el("span", {class: "tt", text: title}), el("span", {class: "badge", text: "working"})),
+    el("p", {class: "goal", text: goal}),
+    el("div", {class: "think"}, el("span", {class: "spin"}), el("span", {text: "Thinking..."})));
+  $("#work").append(c); scrollWork(c);
+  return {
+    done(label = "done") { c.querySelector(".think")?.remove(); c.querySelector(".badge").textContent = label; },
+    status(t) { const th = c.querySelector(".think span:last-child"); if (th) th.textContent = t; },
+    kv(rows) { c.append(el("dl", {class: "kv"}, rows.flatMap(([k, v]) => [el("dt", {text: k}), el("dd", {text: v})]))); },
+    tool(t, err) { c.append(el("div", {class: "tool" + (err ? " err" : ""), text: t})); },
+    decide(t) { c.append(el("div", {class: "decide", text: t})); },
+    add(n) { c.append(n); scrollWork(n); return n; },
+  };
+}
+
+/* ================= Triage ================= */
+function triageOffline(text) {
+  const t = text.toLowerCase();
+  const issue = /broke|broken|damag|crack|leak|doesn.?t work|not work|faulty|defect/.test(t) ? "damaged"
+    : /never (arrived|came)|not (arrived|received)|didn.?t (arrive|come)|missing|lost/.test(t) ? "not_delivered"
+    : /wrong (size|item|colou?r|product)|swap|exchange/.test(t) ? "wrong_item"
+    : /late|delay/.test(t) ? "late" : "other";
+  const wants = /refund|money back|reimburs/.test(t) ? "refund" : /replace|new one|swap|exchange|send (me )?another/.test(t) ? "replace" : "unclear";
+  const m = t.match(/\b(\d{4})\b/);
+  const prod = Object.values(ORDERS).find(o => o.keys.some(k => t.includes(k)));
+  const mood = /!!|ridiculous|angry|unacceptable|furious|worst/.test(t) ? "angry" : /please|thanks|thank you/.test(t) ? "calm" : "upset";
+  return {issue, wants, order_id: m ? m[1] : null, product: prod ? prod.keys[0] : null, mood,
+          summary: `Customer reports a ${issue.replace("_", " ")} problem${m ? " on order " + m[1] : ""}.`};
+}
+async function triageAgent(text) {
+  useBudget("step");
+  now("Triage Agent is reading the complaint.", "Its job: understand what went wrong and what the customer wants.");
+  const c = card("triage", "Triage Agent", "Reads the message and turns it into facts the other agents can use.");
+  const prompt = `You are the Triage Agent of an online shop's support team.
+Read the customer complaint and extract facts. Reply with ONLY one JSON object:
+{"issue":"damaged|not_delivered|wrong_item|late|other","wants":"refund|replace|unclear","order_id":"4-digit string or null","product":"short product word or null","mood":"angry|upset|calm","summary":"one plain sentence"}
+Complaint: """${text.slice(0, 2000)}"""`;
+  const {out, live} = await think("triage", prompt, () => triageOffline(text));
+  const r = Object.assign(triageOffline(text), out || {});
+  r.issue = String(r.issue || "other"); r.wants = String(r.wants || "unclear");
+  if (r.order_id != null) r.order_id = String(r.order_id).replace(/\D/g, "").slice(0, 4) || null;
+  c.done(live ? "done · Claude" : "done · offline");
+  c.kv([["Problem", r.issue.replace("_", " ")], ["Customer wants", r.wants], ["Order number", r.order_id || "not given"], ["Product", r.product || "not mentioned"], ["Mood", r.mood]]);
+  c.decide("Summary: " + r.summary);
+  return r;
+}
+
+/* ================= Order (ask loop + tool retry loop) ================= */
+function findOrder(tri) {
+  if (tri.order_id) return {order: ORDERS[tri.order_id] || null, how: `find_order(id="${tri.order_id}")`};
+  if (tri.product) {
+    const p = String(tri.product).toLowerCase();
+    const hits = Object.values(ORDERS).filter(o => o.keys.some(k => p.includes(k) || k.includes(p)) || o.product.toLowerCase().includes(p));
+    return {order: hits.length === 1 ? hits[0] : null, how: `search_orders(product="${tri.product}")`, hits: hits.length};
+  }
+  return {order: null, how: "search_orders() - nothing to search with"};
+}
+function dbFails(attempt) { const m = {works: 0, once: 1, twice: 2, always: 99}[sw.tool]; return loop === "tool" && attempt <= m; }
+async function callDatabase(c) {
+  // Loop 4: tool retry with a wait that doubles each time
+  for (let attempt = 1; ; attempt++) {
+    c.status(`Calling the database (try ${attempt} of ${MAX_TRIES})...`);
+    await sleep(700);
+    useBudget("tool");
+    hop("order", "db", "tool call", `get_orders() · try ${attempt}`);
+    if (!dbFails(attempt)) { if (attempt > 1) c.tool(`try ${attempt}: database answered ✓`); fGo("o", "db"); return true; }
+    await sleep(500);
+    hop("db", "order", "error", "Timeout: no answer after 5 s");
+    c.tool(`try ${attempt}: database timeout (no answer after 5 s)`, true);
+    fGo("o", "db"); fNode("db", "active"); await sleep(400);
+    fGo("db", "tries"); fBadge("tries", `try ${attempt} of ${MAX_TRIES}`);
+    if (attempt >= MAX_TRIES) {
+      fGo("tries", "person");
+      c.decide(`Stop rule: ${MAX_TRIES} tries failed. Handing over to a person.`);
+      return false;
+    }
+    fGo("tries", "wait");
+    const wait = attempt;
+    c.decide(`Not giving up: wait ${wait} s, then try again.`);
+    await waitNext("order", "db", `the database timed out; wait ${wait} s and retry`, true, `try ${attempt + 1} of ${MAX_TRIES} next`);
+    for (let s = wait; s > 0; s--) { c.status(`Waiting ${s} s before retrying...`); await sleep(1000); }
+    fGo("wait", "o");
+  }
+}
+async function orderAgent(tri) {
+  now("Order Agent is looking up the order.", "It uses a tool: the shop's order database.");
+  const c = card("order", "Order Agent", "Finds the order in the database. Goes back to the customer if it can't.");
+  if (loop === "tool" && !(await callDatabase(c))) { c.done("stopped"); return null; }
+  for (let attempt = 1; ; attempt++) {
+    c.status(`Searching orders (try ${attempt} of ${MAX_TRIES})...`);
+    await sleep(600);
+    useBudget("tool");
+    const res = findOrder(tri);
+    hop("order", "db", "search", res.how);
+    await sleep(400);
+    if (res.order) {
+      const o = res.order;
+      hop("db", "order", "found", `Order ${o.id}: ${o.product}, ${eur(o.price)}`);
+      if (loop === "ask") fGo("o", "found");
+      c.tool(`${res.how}\n→ order ${o.id} · ${o.customer} · ${o.product} · ${eur(o.price)}`);
+      c.done(attempt > 1 ? `found on try ${attempt}` : "found");
+      c.kv([["Customer", o.customer], ["Product", o.product], ["Price", eur(o.price)], ["Delivery", o.status]]);
+      return o;
+    }
+    hop("db", "order", "no match", res.hits > 1 ? `${res.hits} possible orders` : "nothing found");
+    c.tool(`${res.how}\n→ ${res.hits > 1 ? res.hits + " possible orders, can't pick one" : "no order found"}`, true);
+    fGo("o", "found"); await sleep(300);
+    fGo("found", "tries"); fBadge("tries", `try ${attempt} of ${MAX_TRIES}`);
+    if (attempt >= MAX_TRIES) {
+      fGo("tries", "person");
+      c.decide(`Stop rule: ${MAX_TRIES} tries without finding the order. Handing over to a person.`);
+      c.done("stopped");
+      return null;
+    }
+    fGo("tries", "ask");
+    c.decide("Can't tell which order this is. Going back to the customer to ask.");
+    await waitNext("order", "cust", "no order found, so the agent asks instead of guessing", true, `try ${attempt + 1} of ${MAX_TRIES} next`);
+    const q = attempt === 1 ? "I'm sorry about this! Could you give me your 4-digit order number?" : "Hmm, I can't find that one. Could you check the 4-digit order number again?";
+    say("bot", q); hop("order", "cust", "asks a question", q);
+    clockStop();
+    now("The agent is waiting for the customer.", loop === "ask" && sw.ask === "wrong" ? "The customer is replying..." : "Type the order number as the customer (try 1004).");
+    let answer;
+    if (loop === "ask" && sw.ask === "wrong") { await sleep(1200); answer = ["It's 9999 I think", "Maybe 1234?", "Order 5555"][attempt - 1] || "0000"; }
+    else answer = await askInline(c);
+    clockStart();
+    say("me", answer); hop("cust", "order", "replies", answer);
+    fGo("ask", "o");
+    const m = answer.match(/\d{4}/); tri.order_id = m ? m[0] : null;
+  }
+}
+function askInline(c) {
+  return waitFor(res => {
+    const inp = el("input", {id: "orderAsk", placeholder: "Order number, e.g. 1004", inputmode: "numeric", "aria-label": "Order number"});
+    const go = () => { const v = inp.value.trim(); if (!v) return; box.remove(); res(v); };
+    const box = c.add(el("div", {class: "ask"}, inp, el("button", {class: "send", text: "Reply as customer", onclick: go})));
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    inp.focus();
+  });
+}
+
+/* ================= Resolution ================= */
+function replyFor(res, o) {
+  const f = first(o), p = o.product.toLowerCase();
+  switch (res.decision) {
+    case "refund": return `Hi ${f}, I'm sorry about your ${p}. We're refunding ${eur(res.amount)} to your original payment method; you'll see it in 3-5 days.`;
+    case "replace": return `Hi ${f}, sorry about that! We're sending you a replacement for your ${p} today (worth ${eur(res.amount)}), free of charge.`;
+    case "voucher": return `Hi ${f}, I'm sorry about your ${p}. We'd like to offer you a ${eur(res.amount)} voucher for your next order.`;
+    case "partial": return `Hi ${f}, sorry about your ${p}. We're refunding ${eur(res.amount)}, half the price, to your original payment method.`;
+    default: return `Hi ${f}, thanks for letting us know, and I'm sorry for the trouble. Your order did arrive, so no refund is due, but we've told our carrier.`;
+  }
+}
+function applyComment(comment, o) {
+  const c = comment.toLowerCase(), pct = +(c.match(/(\d{1,2})\s*%/) || [])[1];
+  if (/voucher|coupon|credit/.test(c)) return {decision: "voucher", pct: pct || 20};
+  if (/half|50|partial/.test(c)) return {decision: "partial", pct: 50};
+  if (/replac|new one|send/.test(c)) return {decision: "replace", pct: 100};
+  return {decision: "voucher", pct: pct || 20};
+}
+function resolutionOffline(tri, o, comment) {
+  let decision, pct = 100, reason;
+  if (comment) { ({decision, pct} = applyComment(comment, o)); reason = `Following the manager's comment: "${comment}".`; }
+  else if (tri.issue === "late") { decision = "reject"; reason = "The item arrived, only a little late. Policy: no refund for short delays."; }
+  else if (tri.issue === "wrong_item") { decision = "replace"; reason = "Wrong item or size: free exchange."; }
+  else if (tri.issue === "damaged" || tri.issue === "not_delivered") { decision = tri.wants === "replace" ? "replace" : "refund"; reason = tri.issue === "damaged" ? "Item arrived damaged: refund or replacement." : "No tracking scan for 10 days: treat as lost."; }
+  else { decision = "refund"; reason = "Customer is unhappy with the order; policy allows a refund."; }
+  return {decision, pct, reason};
+}
+async function resolutionAgent(tri, o, comment = "") {
+  useBudget("step");
+  now(comment ? "Resolution Agent is rethinking with the manager's comment." : "Resolution Agent is deciding what to do.", "It applies the shop policy: refund, replace, voucher or no.");
+  const c = card("resol", "Resolution Agent", comment ? `Decides again, using the manager's comment: "${comment}"` : "Applies the shop policy to decide the outcome.");
+  const prompt = `You are the Resolution Agent of an online shop's support team.
+Policy: damaged or lost items -> refund (or replace if asked). Wrong item or size -> replace. Short delivery delay -> reject (no refund).
+${comment ? `The manager rejected the previous proposal with this comment, follow it: "${comment}"` : ""}
+Facts: ${JSON.stringify(tri)}
+Order: ${JSON.stringify({id: o.id, product: o.product, price_eur: o.price, status: o.status})}
+Reply with ONLY one JSON object: {"decision":"refund|replace|voucher|partial|reject","percent":number (share of the price: 100 for refund/replace, e.g. 20 for a 20% voucher, 50 for half),"reason":"one sentence"}`;
+  const {out, live} = await think("resol", prompt, () => resolutionOffline(tri, o, comment));
+  const off = resolutionOffline(tri, o, comment);
+  const r = Object.assign({}, off, out || {});
+  if (!["refund", "replace", "voucher", "partial", "reject"].includes(r.decision)) r.decision = off.decision;
+  r.pct = Number(r.percent ?? r.pct) || off.pct;
+  // money is computed by code, never by the AI
+  r.amount = r.decision === "reject" ? 0 : Math.round(o.price * Math.min(100, Math.max(0, r.pct)) / 100);
+  r.reply = replyFor(r, o);
+  c.done(live ? "done · Claude" : "done · offline");
+  c.kv([["Decision", r.decision === "reject" ? "no refund" : r.decision], ["Value", eur(r.amount)], ["Why", r.reason]]);
+  return r;
+}
+
+/* ================= Writer + Reviewer (loop 2) ================= */
+const WEAK = [
+  () => "Read our returns policy. We can't help with that here.",
+  o => `Hi ${first(o)}, we will look into it at some point. Please read our policy first.`,
+  () => "Dear customer, your request has been noted and will be processed in due course. Our team will review it. We will reply later. Thank you.",
+];
+function weakDraft(attempt) { return loop === "check" && (sw.check === "always" || (sw.check === "once" && attempt === 1)); }
+async function writerAgent(tri, o, res, attempt, feedback) {
+  useBudget("step");
+  now(attempt === 1 ? "Writer Agent is drafting the reply." : "Writer Agent is rewriting, using the reviewer's notes.", `Draft ${attempt} of ${MAX_TRIES}.`);
+  const c = card("writer", "Writer Agent", attempt === 1 ? "Writes a short, friendly reply to the customer." : "Rewrites the reply to fix: " + feedback.join(", ") + ".");
+  let draft, live = false;
+  if (weakDraft(attempt)) { await sleep(900); draft = WEAK[(attempt - 1) % WEAK.length](o); hop("writer", null, "writes a draft", "(simulated weak writer)"); }
+  else {
+    const prompt = `You write customer support replies for an online shop.
+Write a reply of at most 3 sentences. Start with "Hi ${first(o)},". Be warm and polite, never blame the customer.
+Outcome to communicate: ${res.decision} worth "${eur(res.amount)}" (write the amount exactly like that) for the ${o.product}.
+${feedback.length ? "A reviewer rejected the previous draft for: " + feedback.join("; ") + ". Fix those." : ""}
+Reply with ONLY one JSON object: {"reply":"the message"}`;
+    const t = await think("writer", prompt, () => ({reply: res.reply}));
+    draft = String(t.out?.reply || res.reply); live = t.live;
+  }
+  c.done(live ? `draft ${attempt} · Claude` : `draft ${attempt}`);
+  c.decide("Draft: " + draft);
+  return draft;
+}
+function reviewDraft(draft, o, res) {
+  const d = draft.toLowerCase();
+  const outcomeWord = {refund: "refund", replace: "replac", voucher: "voucher", partial: "refund", reject: "sorry"}[res.decision];
+  const sentences = (draft.match(/[.!?](\s|$)/g) || []).length;
+  return [
+    ["Greets the customer by name", d.includes(first(o).toLowerCase())],
+    ["Says what we will do", d.includes(outcomeWord)],
+    ["States the right amount", res.amount === 0 || draft.includes(eur(res.amount)) || draft.includes(String(res.amount))],
+    ["Polite, no blaming", !/can.?t help|read our|your fault|not our problem/.test(d)],
+    ["Short: 3 sentences max", sentences <= 3],
+  ];
+}
+async function reviewerAgent(draft, o, res, attempt) {
+  useBudget("step");
+  now("Reviewer Agent is checking the draft.", "It uses a checklist. If anything fails, the draft goes back to the writer.");
+  const c = card("review", "Reviewer Agent", "Checks the draft against the shop's reply checklist before anything is sent.");
+  await sleep(900);
+  const checks = reviewDraft(draft, o, res);
+  hop("review", null, "checks the draft", checks.filter(x => !x[1]).length ? `${checks.filter(x => !x[1]).length} check(s) failed` : "all checks passed");
+  const ul = el("ul", {class: "checks"}, checks.map(([label, ok]) => el("li", {}, el("span", {class: ok ? "pass" : "fail", text: ok ? "✓ pass" : "✗ fail"}), label)));
+  c.add(ul);
+  const failed = checks.filter(x => !x[1]).map(x => x[0]);
+  c.done(failed.length ? "sent back" : "approved");
+  return failed;
+}
+
+/* ================= Safety rule + Manager ================= */
+async function managerDecision(c, res, o, round) {
+  // auto-manager switch for loop 3, otherwise the presenter decides
+  if (loop === "human" && sw.human !== "you") {
+    await sleep(1400);
+    const rejects = sw.human === "always" || round === 1;
+    const comment = ["Offer a 20% voucher instead", "Offer a 10% voucher instead", "Refund 50% only"][round - 1] || "Offer a 10% voucher instead";
+    return rejects ? {ok: false, comment} : {ok: true};
+  }
+  const withComment = loop === "human";
+  return waitFor(resolve => {
+    const inp = el("input", {placeholder: "Comment for the agent (why you reject)", "aria-label": "Manager comment"});
+    const box = el("div", {class: "approve"},
+      el("button", {class: "btn-ok", text: `Approve ${res.decision} (${eur(res.amount)})`, onclick: () => { box.remove(); resolve({ok: true}); }}),
+      el("button", {class: "btn-no", text: "Reject", onclick: () => { const cm = inp.value.trim() || "Offer a 20% voucher instead"; box.remove(); resolve({ok: false, comment: cm}); }}));
+    if (withComment) {
+      const wrap = el("div", {class: "ask"}, inp);
+      const sug = el("div", {class: "sugg"}, ["Offer a 20% voucher instead", "Replace it instead", "Refund 50% only"].map(s => el("button", {text: s, onclick: () => { inp.value = s; inp.focus(); }})));
+      box.prepend(el("div", {style: "display:grid;gap:6px;width:100%"}, wrap, sug));
+    }
+    c.add(box); box.querySelector(".btn-ok").focus({preventScroll: true});
+  });
+}
+async function safetyGate(res, o, round = 1) {
+  const c = card("gate", "Safety rule", `Fixed rule, not AI: anything over ${eur(LIMIT)} needs the manager.`);
+  await sleep(500);
+  if (res.amount <= LIMIT) {
+    c.done("passed");
+    c.decide(`${eur(res.amount)} is within the ${eur(LIMIT)} limit, so the agents can act on their own.`);
+    hop("gate", null, "auto-approved", `${eur(res.amount)} ≤ ${eur(LIMIT)}`);
+    return {ok: true, by: "agents (auto)"};
+  }
+  c.done("needs the manager");
+  c.decide(`${eur(res.amount)} is over the ${eur(LIMIT)} limit. Asking the manager.`);
+  hop("gate", "human", "escalation", `${res.decision} worth ${eur(res.amount)}`);
+  clockStop();
+  const auto = loop === "human" && sw.human !== "you";
+  now(auto ? "The manager is reviewing the proposal." : "Your turn: you are the manager.", auto ? "(simulated manager)" : `Approve or reject the ${res.decision} of ${eur(res.amount)}${loop === "human" ? ". If you reject, add a comment." : "."}`);
+  const h = card("human", auto ? "Manager (simulated)" : "Manager (you)", "The agents did the work. A person makes the final call on big amounts.");
+  h.done(loop === "human" ? `review ${round} of ${MAX_TRIES}` : "waiting");
+  h.kv([["Order", `${o.id} · ${o.product}`], ["Agents propose", `${res.decision} · ${eur(res.amount)}`], ["Reason", res.reason]]);
+  const d = await managerDecision(h, res, o, round);
+  clockStart();
+  h.add(el("div", {class: "result " + (d.ok ? "ok" : "no"), text: d.ok ? "Approved by the manager" : `Rejected: "${d.comment}"`}));
+  hop("human", "app", d.ok ? "approves" : "rejects", d.ok ? "The agents may go ahead" : d.comment);
+  return {ok: d.ok, comment: d.comment, by: "manager"};
+}
+
+/* ================= main run ================= */
+function finish(reply, outcome, endNode = "end") {
+  ORCH.active = "finished"; renderCR();
+  fNode(endNode, "done"); activeNode = null;
+  say("bot", reply); hop("app", "cust", "sends the reply", reply);
+  clockStop(); clearInterval(ticker); $("#clock").textContent = secs().toFixed(1) + " s";
+  hop("app", null, `finished in ${secs().toFixed(1)} s of agent work`, outcome);
+  now("Done. The customer has their answer.", `${outcome}. Try another example, or flip the switch above and run it again.`);
+}
+const HOLD = o => `Hi ${o ? first(o) : "there"}, thanks for your patience. A member of our team is taking over your case personally and will contact you within 24 hours.`;
+async function handToPerson(o, why, endNode) {
+  const c = card("person", "Handed to a person", why);
+  c.done("stop rule");
+  hop("app", "person", "hand-over", why);
+  await waitNext("app", "cust", "a holding reply while a person takes over");
+  finish(HOLD(o), "Outcome: stop rule reached, handed to a person", endNode);
+}
+
+async function run(text) {
+  text = text.trim(); if (!text) return;
+  reset(true);
+  $("#msg").value = "";
+  $("#work").innerHTML = "";
+  const tok = CUR;
+  $("#sendBtn").disabled = true;
+  worked = 0; clockStart(); startTicker();
+  say("me", text);
+  fNode("c", "active");
+  hop("cust", "orch", "sends a complaint", `"${text.length > 90 ? text.slice(0, 90) + "..." : text}"`);
+  try {
+    const clean = await orchestratorPlan(text);
+    await waitNext("orch", "triage", "the case file (private data hidden) and the run rules");
+    const combined = loop === "check" || loop === "human";
+    fGo("c", combined ? "to" : "t");
+    const tri = await triageAgent(clean);
+    mem({Problem: tri.issue.replace("_", " "), Wants: tri.wants, "Order no.": tri.order_id || "unknown"});
+    await waitNext("triage", "order", `problem = ${tri.issue.replace("_", " ")}, wants = ${tri.wants}, order = ${tri.order_id || "unknown"}`);
+    if (!combined) fGo("t", "o");
+    const o = await orderAgent(tri);
+    if (o) { ORCH.order = o; mem({"Order no.": o.id, Product: o.product, Price: eur(o.price)}); }
+    if (!o) return await handToPerson(null, `Stop rule: the Order Agent failed ${MAX_TRIES} times.`, "person");
+    await waitNext("order", "resol", `order ${o.id} · ${o.product} · ${eur(o.price)}`);
+    if (loop === "ask") fGo("found", "r"); else if (loop === "tool") fGo("db", "r"); else fGo("to", "r");
+    let res = await resolutionAgent(tri, o);
+    mem({Decision: `${res.decision} ${eur(res.amount)}`});
+    let reply = res.reply;
+
+    if (loop === "check") {
+      await waitNext("resol", "writer", `${res.decision} worth ${eur(res.amount)}`);
+      fGo("r", "w");
+      let feedback = [];
+      for (let attempt = 1; ; attempt++) {
+        const draft = await writerAgent(tri, o, res, attempt, feedback);
+        mem({Drafts: String(attempt)});
+        await waitNext("writer", "review", "draft " + attempt);
+        fGo("w", "rev");
+        feedback = await reviewerAgent(draft, o, res, attempt);
+        fGo("rev", "ok");
+        if (!feedback.length) { reply = draft; fGo("ok", "safe"); break; }
+        await sleep(300);
+        fGo("ok", "tries"); fBadge("tries", `try ${attempt} of ${MAX_TRIES}`);
+        if (attempt >= MAX_TRIES) { fGo("tries", "person"); return await handToPerson(o, `Stop rule: ${MAX_TRIES} drafts failed the checklist. A person writes the reply.`, "person"); }
+        fGo("tries", "fb");
+        await waitNext("review", "writer", "failed: " + feedback.join(", "), true, `try ${attempt + 1} of ${MAX_TRIES} next`);
+        fGo("fb", "w");
+      }
+      await waitNext("review", "gate", `approved reply for ${res.decision} · ${eur(res.amount)}`);
+    } else if (loop === "human") {
+      await waitNext("resol", "gate", `${res.decision} · ${eur(res.amount)}`);
+      fGo("r", "over");
+      for (let round = 1; ; round++) {
+        if (res.amount <= LIMIT) {
+          await safetyGate(res, o, round);
+          fGo("over", "end"); reply = res.reply; break;
+        }
+        fGo("over", "mgr");
+        const g = await safetyGate(res, o, round);
+        if (g.ok) { fGo("mgr", "end"); reply = res.reply; break; }
+        fGo("mgr", "tries"); fBadge("tries", `try ${round} of ${MAX_TRIES}`);
+        if (round >= MAX_TRIES) { fGo("tries", "person"); return await handToPerson(o, `Stop rule: the manager rejected ${MAX_TRIES} proposals. A senior specialist takes over.`, "person"); }
+        fGo("tries", "back");
+        await waitNext("human", "resol", `manager's comment: "${g.comment}"`, true, `try ${round + 1} of ${MAX_TRIES} next`);
+        fGo("back", "r");
+        mem({Manager: `rejected: ${g.comment}`});
+        res = await resolutionAgent(tri, o, g.comment);
+        mem({Decision: `${res.decision} ${eur(res.amount)}`});
+        await waitNext("resol", "gate", `${res.decision} · ${eur(res.amount)}`);
+        fGo("r", "over");
+      }
+      await sandboxRun(res, o);
+      await waitNext("orch", "cust", "the approved reply");
+      return finish(reply, `Outcome: ${res.decision} ${eur(res.amount)}`);
+    } else {
+      await waitNext("resol", "gate", `${res.decision} · ${eur(res.amount)}`);
+    }
+
+    // loops 1, 2, 4: single safety step
+    fGo(loop === "check" ? "ok" : "r", "safe");
+    const g = await safetyGate(res, o);
+    if (!g.ok) reply = HOLD(o);
+    if (g.ok) await sandboxRun(res, o);
+    await waitNext(g.ok ? "orch" : "human", "cust", g.ok ? "the approved reply" : "a holding reply (manager rejected)");
+    fGo("safe", "end");
+    finish(reply, g.ok ? `Outcome: ${res.decision === "reject" ? "no refund" : res.decision + " " + eur(res.amount)} (${g.by})` : "Outcome: manager rejected, a person follows up");
+  } catch (e) {
+    if (e instanceof PolicyStop && tok === CUR) {
+      try {
+        $("#crBox").open = true;
+        const c = card("orch", "Orchestrator: policy stop", e.reason);
+        c.done("stopped"); c.decide("The meta-harness overrides the agents: no more steps are allowed on this case.");
+        hop("orch", null, "policy stop", e.reason);
+        await handToPerson(ORCH.order, e.reason + " A person takes over.", "person");
+      } catch (e2) { if (e2 !== STOP) console.error(e2); }
+    } else if (e !== STOP) { console.error(e); now("Something went wrong.", String(e?.message || e)); }
+  } finally {
+    if (tok === CUR) $("#sendBtn").disabled = false;
+  }
+}
+
+/* ================= reset + wiring ================= */
+function reset(keepChart) {
+  CUR = {}; pendingRejects.splice(0).forEach(rej => rej(STOP));
+  nextResolve = null; clockStop(); clearInterval(ticker); worked = 0; activeNode = null;
+  $("#clock").textContent = "0.0 s"; $("#nextBtn").disabled = true; $("#sendBtn").disabled = false;
+  $("#chat").innerHTML = ""; flow.innerHTML = ""; $("#now").classList.remove("loopy"); resetLayers();
+  ORCH = freshOrch(); renderCR();
+  $("#work").innerHTML = "";
+  $("#work").append(el("div", {class: "empty"}, el("p", {style: "margin:0", text: `Loop: ${LOOPS[loop].name}. ${LOOPS[loop].short}`}),
+    el("ol", {}, el("li", {text: "Use the switch above to decide whether the loop happens."}),
+      el("li", {text: "Send a complaint (or click an example on the left)."}),
+      el("li", {text: "Click Next at each hand-off. Blue banners mark a loop going back."}))));
+  renderChart(loop);
+  now("Ready. Pick an example complaint or type your own.", "The demo stops at every hand-off and every loop so you can explain what happened.");
+}
+$("#sendBtn").onclick = () => run($("#msg").value);
+$("#msg").addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) run($("#msg").value); });
+$("#reset").onclick = () => reset();
+selectLoop("ask");
+</script>

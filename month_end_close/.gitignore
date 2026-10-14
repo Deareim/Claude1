@@ -1,0 +1,5 @@
+__pycache__/
+.pytest_cache/
+data/close_demo.db
+data/csv/
+output/
